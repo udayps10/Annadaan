@@ -1,0 +1,544 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+
+export default function AdminDashboard() {
+  const [user, setUser] = useState<any>(null)
+  const [listings, setListings] = useState<any[]>([])
+  const [pickupRequests, setPickupRequests] = useState<any[]>([])
+  const [activities, setActivities] = useState<any[]>([])
+  const [deliveries, setDeliveries] = useState<any[]>([])
+  const [userStats, setUserStats] = useState<any>({})
+  const [rescueStats, setRescueStats] = useState<any>({})
+  const [recentUsers, setRecentUsers] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState('overview')
+  const [loading, setLoading] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null)
+  const [newDataAvailable, setNewDataAvailable] = useState(false)
+  const [lastActivityCount, setLastActivityCount] = useState(0)
+
+  useEffect(() => {
+    const userType = localStorage.getItem('userType')
+    const userEmail = localStorage.getItem('userEmail')
+    const userName = localStorage.getItem('userName')
+    
+    if (!userType || userType !== 'admin') {
+      window.location.href = '/login'
+      return
+    }
+
+    setUser({ email: userEmail, name: userName, type: userType })
+    fetchData()
+    fetchActivities()
+    
+    // Set up auto-refresh
+    if (autoRefresh) {
+      const interval = setInterval(() => {
+        fetchActivities()
+        fetchData()
+      }, 30000) // Refresh every 30 seconds
+      setRefreshInterval(interval)
+    }
+
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval)
+      }
+    }
+  }, [autoRefresh])
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true)
+      // Fetch listings
+      const listingsResponse = await fetch('/api/listings')
+      if (listingsResponse.ok) {
+        const listingsData = await listingsResponse.json()
+        setListings(listingsData.listings || [])
+      }
+
+      // Fetch pickup requests
+      const requestsResponse = await fetch('/api/pickup-requests')
+      if (requestsResponse.ok) {
+        const requestsData = await requestsResponse.json()
+        setPickupRequests(requestsData.requests || [])
+      }
+      setLastUpdate(new Date())
+    } catch (error) {
+      console.error('Failed to fetch data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const fetchActivities = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+      
+      const response = await fetch('/api/admin/activities', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        const newActivities = data.activities || []
+        
+        // Check if there are new activities
+        if (newActivities.length > lastActivityCount && lastActivityCount > 0) {
+          setNewDataAvailable(true)
+          setTimeout(() => setNewDataAvailable(false), 3000) // Hide notification after 3 seconds
+        }
+        
+        setActivities(newActivities)
+        setDeliveries(data.deliveries || [])
+        setUserStats(data.userStats || {})
+        setRescueStats(data.rescueStats || {})
+        setRecentUsers(data.recentUsers || [])
+        setLastUpdate(new Date())
+        setLastActivityCount(newActivities.length)
+      }
+    } catch (error) {
+      console.error('Failed to fetch activities:', error)
+    }
+  }, [])
+
+  const handleRefresh = () => {
+    fetchData()
+    fetchActivities()
+  }
+
+  const toggleAutoRefresh = () => {
+    setAutoRefresh(!autoRefresh)
+    if (!autoRefresh) {
+      const interval = setInterval(() => {
+        fetchActivities()
+        fetchData()
+      }, 30000)
+      setRefreshInterval(interval)
+    } else {
+      if (refreshInterval) {
+        clearInterval(refreshInterval)
+        setRefreshInterval(null)
+      }
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString()
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'available': return 'text-green-600'
+      case 'pending': return 'text-yellow-600'
+      case 'approved': return 'text-blue-600'
+      case 'completed': return 'text-green-600'
+      case 'rejected': return 'text-red-600'
+      default: return 'text-gray-600'
+    }
+  }
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'listing_created': return '📝'
+      case 'pickup_requested': return '📋'
+      case 'pickup_status_change': return '🔄'
+      default: return '📌'
+    }
+  }
+
+  const logout = () => {
+    localStorage.clear()
+    window.location.href = '/login'
+  }
+
+  if (!user) return <div>Loading...</div>
+
+  return (
+    <div className="min-h-screen bg-gray-50 relative">
+      {/* New Data Notification */}
+      {newDataAvailable && (
+        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-slide-in-right">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">🔄 New data available!</span>
+            <button 
+              onClick={() => setNewDataAvailable(false)}
+              className="text-white hover:text-gray-200"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-primary-600">🍽️ FoodRescue</h1>
+              <span className="ml-4 text-gray-600">Admin Dashboard</span>
+              {loading && (
+                <div className="ml-4 flex items-center text-sm text-gray-500">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500 mr-2"></div>
+                  Updating...
+                </div>
+              )}
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="text-xs text-gray-500">
+                Last updated: {lastUpdate.toLocaleTimeString()}
+              </div>
+              <button
+                onClick={toggleAutoRefresh}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${
+                  autoRefresh 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}
+              >
+                {autoRefresh ? '🔄 Auto' : '⏸️ Manual'}
+              </button>
+              <button
+                onClick={handleRefresh}
+                disabled={loading}
+                className="bg-primary-600 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+              >
+                {loading ? 'Refreshing...' : 'Refresh'}
+              </button>
+              <span className="text-gray-700">Welcome, {user.name}!</span>
+              <button
+                onClick={logout}
+                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation Tabs */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8 px-6">
+              {[
+                { id: 'overview', name: 'Overview', icon: '📊', count: null },
+                { id: 'activities', name: 'Activities', icon: '📝', count: activities.length },
+                { id: 'deliveries', name: 'Deliveries', icon: '🚚', count: deliveries.length },
+                { id: 'users', name: 'Users', icon: '👥', count: recentUsers.length },
+                { id: 'listings', name: 'Listings', icon: '🍽️', count: listings.length }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`${
+                    activeTab === tab.id
+                      ? 'border-primary-500 text-primary-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors`}
+                >
+                  <span>{tab.icon}</span>
+                  <span>{tab.name}</span>
+                  {tab.count !== null && (
+                    <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
+                      activeTab === tab.id 
+                        ? 'bg-primary-100 text-primary-600' 
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <>
+            {/* Enhanced Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 transition-all duration-300 ${loading ? 'opacity-50' : ''}`}>
+                <h3 className="text-lg font-semibold text-gray-900">Total Users</h3>
+                <p className="text-3xl font-bold text-primary-600">{userStats.total_users || 0}</p>
+                <p className="text-sm text-gray-500 mt-1">+{userStats.new_users_this_month || 0} this month</p>
+                {!loading && <div className="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>}
+              </div>
+              <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 transition-all duration-300 ${loading ? 'opacity-50' : ''}`}>
+                <h3 className="text-lg font-semibold text-gray-900">Food Listings</h3>
+                <p className="text-3xl font-bold text-green-600">{rescueStats.total_listings || 0}</p>
+                <p className="text-sm text-gray-500 mt-1">{rescueStats.available_listings || 0} available</p>
+              </div>
+              <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 transition-all duration-300 ${loading ? 'opacity-50' : ''}`}>
+                <h3 className="text-lg font-semibold text-gray-900">Completed Rescues</h3>
+                <p className="text-3xl font-bold text-blue-600">{rescueStats.completed_pickups || 0}</p>
+                <p className="text-sm text-gray-500 mt-1">{rescueStats.pending_requests || 0} pending</p>
+              </div>
+              <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 transition-all duration-300 ${loading ? 'opacity-50' : ''}`}>
+                <h3 className="text-lg font-semibold text-gray-900">Active Partners</h3>
+                <p className="text-3xl font-bold text-purple-600">{(parseInt(userStats.total_vendors) || 0) + (parseInt(userStats.total_ngos) || 0)}</p>
+                <p className="text-sm text-gray-500 mt-1">{userStats.total_vendors || 0} vendors, {userStats.total_ngos || 0} NGOs</p>
+              </div>
+            </div>
+
+            {/* Recent Activity Summary */}
+            <div className={`bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8 transition-all duration-300 ${loading ? 'opacity-50' : ''}`}>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Recent Activity</h2>
+                <div className="flex items-center space-x-2">
+                  {autoRefresh && (
+                    <div className="flex items-center text-sm text-green-600">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
+                      Live
+                    </div>
+                  )}
+                  <span className="text-xs text-gray-500">{activities.length} activities</span>
+                </div>
+              </div>
+              {activities.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No recent activities</p>
+              ) : (
+                <div className="space-y-3">
+                  {activities.slice(0, 5).map((activity, index) => (
+                    <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <span className="text-xl">{getActivityIcon(activity.activity_type)}</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{activity.description}</p>
+                        <p className="text-xs text-gray-500">
+                          {activity.user_name} • {formatDate(activity.timestamp)}
+                        </p>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full bg-gray-100 ${getStatusColor(activity.status)}`}>
+                        {activity.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Activities Tab */}
+        {activeTab === 'activities' && (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Platform Activities (Last 30 Days)</h2>
+            {activities.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No activities found</p>
+            ) : (
+              <div className="space-y-4">
+                {activities.map((activity, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <span className="text-2xl">{getActivityIcon(activity.activity_type)}</span>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{activity.title}</h3>
+                            <p className="text-gray-600 text-sm">{activity.description}</p>
+                            <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
+                              <span>User: {activity.user_name}</span>
+                              <span>Role: {activity.user_role}</span>
+                              {activity.business_name && <span>Organization: {activity.business_name}</span>}
+                              <span>Time: {formatDate(activity.timestamp)}</span>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(activity.status)} bg-gray-100`}>
+                            {activity.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Deliveries Tab */}
+        {activeTab === 'deliveries' && (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Completed Deliveries</h2>
+            {deliveries.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No completed deliveries yet</p>
+            ) : (
+              <div className="space-y-6">
+                {deliveries.map((delivery, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{delivery.food_title}</h3>
+                        <p className="text-gray-600">{delivery.food_description}</p>
+                        <p className="text-sm text-gray-500 mt-1">Quantity: {delivery.quantity}</p>
+                      </div>
+                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                        Completed
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2">From (Vendor)</h4>
+                        <p className="text-sm text-gray-600">{delivery.vendor_name}</p>
+                        {delivery.business_name && (
+                          <p className="text-sm text-gray-500">{delivery.business_name}</p>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2">To (NGO)</h4>
+                        <p className="text-sm text-gray-600">{delivery.ngo_name}</p>
+                        {delivery.organization_name && (
+                          <p className="text-sm text-gray-500">{delivery.organization_name}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-2">Timeline</h4>
+                          <p className="text-sm text-gray-600">Requested: {formatDate(delivery.requested_at)}</p>
+                          <p className="text-sm text-gray-600">Completed: {formatDate(delivery.completed_at)}</p>
+                        </div>
+                        {delivery.pickup_photo_url && (
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-2">Verification Photo</h4>
+                            <img 
+                              src={delivery.pickup_photo_url} 
+                              alt="Pickup verification"
+                              className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {delivery.pickup_notes && (
+                        <div className="mt-3">
+                          <h4 className="font-medium text-gray-900 mb-1">Pickup Notes</h4>
+                          <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{delivery.pickup_notes}</p>
+                        </div>
+                      )}
+                      
+                      {delivery.vendor_response && (
+                        <div className="mt-3">
+                          <h4 className="font-medium text-gray-900 mb-1">Vendor Response</h4>
+                          <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{delivery.vendor_response}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Users Tab */}
+        {activeTab === 'users' && (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent User Registrations</h2>
+            {recentUsers.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No users found</p>
+            ) : (
+              <div className="space-y-4">
+                {recentUsers.map((user, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{user.name}</h3>
+                        <p className="text-gray-600 text-sm">{user.email}</p>
+                        {user.organization_name && (
+                          <p className="text-gray-500 text-sm">{user.organization_name}</p>
+                        )}
+                        <p className="text-gray-400 text-xs mt-1">Registered: {formatDate(user.created_at)}</p>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        user.role === 'vendor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                      }`}>
+                        {user.role.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Listings Tab (existing content) */}
+        {activeTab === 'listings' && (
+          <>
+            {/* Recent Listings */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Food Listings</h2>
+              
+              {listings.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No food listings yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {listings.slice(0, 10).map((listing) => (
+                    <div key={listing.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{listing.title}</h3>
+                          <p className="text-gray-600 text-sm">{listing.description}</p>
+                          <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
+                            <span>Quantity: {listing.quantity} {listing.unit}</span>
+                            <span>Category: {listing.category}</span>
+                            <span>Vendor: {listing.vendor_name || listing.business_name}</span>
+                            <span>Status: <span className={`font-medium ${listing.status === 'available' ? 'text-green-600' : 'text-yellow-600'}`}>{listing.status}</span></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Recent Pickup Requests */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Pickup Requests</h2>
+              
+              {pickupRequests.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No pickup requests yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pickupRequests.slice(0, 10).map((request) => (
+                    <div key={request.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{request.listing_title}</h3>
+                          <p className="text-gray-600 text-sm">Requested by: {request.ngo_name || request.organization_name}</p>
+                          <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
+                            <span>Requested: {request.requested_quantity} {request.unit}</span>
+                            <span>Status: <span className={`font-medium ${request.status === 'pending' ? 'text-yellow-600' : request.status === 'approved' ? 'text-green-600' : 'text-red-600'}`}>{request.status}</span></span>
+                          </div>
+                          {request.notes && (
+                            <p className="text-sm text-gray-500 mt-1">Notes: {request.notes}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
