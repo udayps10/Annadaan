@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import ImageDisplay from '@/components/ImageDisplay'
+import { compressForPickup, validateImageFile } from '../../../lib/imageCompression'
 import { useAlert } from '../../../hooks/useAlert'
 import { AlertModal } from '../../../components/AlertModal'
 import { usePrompt } from '../../../hooks/usePrompt'
@@ -218,9 +219,19 @@ export default function NGODashboard() {
         try {
           setUploadingPhoto(requestId)
 
-          // Upload the photo first
+          // Validate and compress the image
+          const validation = validateImageFile(file)
+          if (!validation.valid) {
+            showError(validation.error!)
+            return
+          }
+
+          console.log('Compressing pickup verification photo...')
+          const compressedFile = await compressForPickup(file)
+
+          // Upload the compressed photo
           const formData = new FormData()
-          formData.append('photo', file)
+          formData.append('photo', compressedFile)
 
           const token = localStorage.getItem('token')
           const uploadResponse = await fetch('/api/upload-photo', {
