@@ -121,7 +121,7 @@ This is a simplified MVP version designed for quick demonstration. For productio
 - Real-time notifications
 - Geographic search/filtering
 - Image uploads
-- Mobile app
+- Community impact gallery
 - Advanced admin features
 
 ## 🌟 Getting Started

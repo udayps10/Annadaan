@@ -303,6 +303,12 @@ export default function NGODashboard() {
               <div className="text-xs text-gray-500">
                 Last updated: {lastUpdate.toLocaleTimeString()}
               </div>
+              <a
+                href="/gallery"
+                className="text-primary-600 hover:text-primary-800 px-3 py-1 rounded-md text-sm font-medium transition-colors"
+              >
+                📸 Gallery
+              </a>
               <button
                 onClick={toggleAutoRefresh}
                 className={`px-3 py-1 rounded-md text-sm font-medium ${

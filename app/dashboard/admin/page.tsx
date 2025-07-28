@@ -8,6 +8,7 @@ export default function AdminDashboard() {
   const [pickupRequests, setPickupRequests] = useState<any[]>([])
   const [activities, setActivities] = useState<any[]>([])
   const [deliveries, setDeliveries] = useState<any[]>([])
+  const [galleryPhotos, setGalleryPhotos] = useState<any[]>([])
   const [userStats, setUserStats] = useState<any>({})
   const [rescueStats, setRescueStats] = useState<any>({})
   const [recentUsers, setRecentUsers] = useState<any[]>([])
@@ -32,12 +33,14 @@ export default function AdminDashboard() {
     setUser({ email: userEmail, name: userName, type: userType })
     fetchData()
     fetchActivities()
+    fetchGalleryPhotos()
     
     // Set up auto-refresh
     if (autoRefresh) {
       const interval = setInterval(() => {
         fetchActivities()
         fetchData()
+        fetchGalleryPhotos()
       }, 30000) // Refresh every 30 seconds
       setRefreshInterval(interval)
     }
@@ -107,9 +110,58 @@ export default function AdminDashboard() {
     }
   }, [])
 
+  const fetchGalleryPhotos = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+      
+      const response = await fetch('/api/admin/gallery', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setGalleryPhotos(data.photos || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch gallery photos:', error)
+    }
+  }, [])
+
+  const handleGalleryAction = async (photoId: number, action: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+      
+      const response = await fetch('/api/admin/gallery', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ photoId, action })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        alert(data.message)
+        fetchGalleryPhotos() // Refresh the gallery
+      } else {
+        const error = await response.json()
+        alert(error.message || 'Action failed')
+      }
+    } catch (error) {
+      console.error('Gallery action failed:', error)
+      alert('Action failed')
+    }
+  }
+
   const handleRefresh = () => {
     fetchData()
     fetchActivities()
+    fetchGalleryPhotos()
   }
 
   const toggleAutoRefresh = () => {
@@ -118,6 +170,7 @@ export default function AdminDashboard() {
       const interval = setInterval(() => {
         fetchActivities()
         fetchData()
+        fetchGalleryPhotos()
       }, 30000)
       setRefreshInterval(interval)
     } else {
@@ -231,6 +284,7 @@ export default function AdminDashboard() {
                 { id: 'overview', name: 'Overview', icon: '📊', count: null },
                 { id: 'activities', name: 'Activities', icon: '📝', count: activities.length },
                 { id: 'deliveries', name: 'Deliveries', icon: '🚚', count: deliveries.length },
+                { id: 'gallery', name: 'Gallery', icon: '📸', count: galleryPhotos.filter(p => !p.isApproved).length },
                 { id: 'users', name: 'Users', icon: '👥', count: recentUsers.length },
                 { id: 'listings', name: 'Listings', icon: '🍽️', count: listings.length }
               ].map((tab) => (
@@ -537,6 +591,158 @@ export default function AdminDashboard() {
               )}
             </div>
           </>
+        )}
+
+        {/* Gallery Tab */}
+        {activeTab === 'gallery' && (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Community Impact Gallery</h2>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-500">
+                  {galleryPhotos.filter(p => !p.isApproved).length} pending approval
+                </span>
+                <a
+                  href="/gallery"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-600 hover:text-primary-800 text-sm font-medium"
+                >
+                  View Public Gallery →
+                </a>
+              </div>
+            </div>
+            
+            {galleryPhotos.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-4">📸</div>
+                <p className="text-gray-500">No gallery photos yet</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Users can upload impact photos from the gallery page
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Pending Approval */}
+                {galleryPhotos.filter(p => !p.isApproved).length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      📋 Pending Approval ({galleryPhotos.filter(p => !p.isApproved).length})
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {galleryPhotos.filter(p => !p.isApproved).map((photo) => (
+                        <div key={photo.id} className="border border-yellow-200 bg-yellow-50 rounded-lg overflow-hidden">
+                          <div className="aspect-square overflow-hidden">
+                            <img
+                              src={photo.photoUrl}
+                              alt={photo.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-4">
+                            <h4 className="font-semibold text-gray-900 mb-1">{photo.title}</h4>
+                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{photo.description}</p>
+                            <div className="text-xs text-gray-500 mb-3">
+                              <div>📍 {photo.location || 'No location'}</div>
+                              <div>👥 {photo.peopleHelped || 0} people helped</div>
+                              <div>👤 By: {photo.organizationName || photo.userFullName}</div>
+                              <div>📅 {formatDate(photo.createdAt)}</div>
+                            </div>
+                            
+                            {photo.tags && (
+                              <div className="flex flex-wrap gap-1 mb-3">
+                                {(() => {
+                                  try {
+                                    const tags = typeof photo.tags === 'string' ? JSON.parse(photo.tags) : photo.tags;
+                                    return Array.isArray(tags) ? tags.slice(0, 2).map((tag: string) => (
+                                      <span key={tag} className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
+                                        {tag}
+                                      </span>
+                                    )) : [];
+                                  } catch (e) {
+                                    return [];
+                                  }
+                                })()}
+                              </div>
+                            )}
+                            
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleGalleryAction(photo.id, 'approve')}
+                                className="flex-1 bg-green-600 text-white py-2 px-3 rounded text-sm font-medium hover:bg-green-700 transition-colors"
+                              >
+                                ✅ Approve
+                              </button>
+                              <button
+                                onClick={() => handleGalleryAction(photo.id, 'reject')}
+                                className="flex-1 bg-red-600 text-white py-2 px-3 rounded text-sm font-medium hover:bg-red-700 transition-colors"
+                              >
+                                ❌ Reject
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Approved Photos */}
+                {galleryPhotos.filter(p => p.isApproved).length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      ✅ Approved Photos ({galleryPhotos.filter(p => p.isApproved).length})
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {galleryPhotos.filter(p => p.isApproved).slice(0, 8).map((photo) => (
+                        <div key={photo.id} className="border border-green-200 bg-green-50 rounded-lg overflow-hidden">
+                          <div className="aspect-square overflow-hidden">
+                            <img
+                              src={photo.photoUrl}
+                              alt={photo.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-3">
+                            <h4 className="font-medium text-gray-900 text-sm mb-1">{photo.title}</h4>
+                            <div className="text-xs text-gray-500 mb-2">
+                              <div>👥 {photo.peopleHelped || 0} helped</div>
+                              <div>👤 {photo.organizationName || photo.userFullName}</div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleGalleryAction(photo.id, 'toggle_public')}
+                                className={`flex-1 py-1 px-2 rounded text-xs font-medium transition-colors ${
+                                  photo.isPublic 
+                                    ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' 
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {photo.isPublic ? '👁️ Public' : '🔒 Private'}
+                              </button>
+                              <button
+                                onClick={() => handleGalleryAction(photo.id, 'reject')}
+                                className="px-2 py-1 text-red-600 hover:text-red-800 text-xs"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {galleryPhotos.filter(p => p.isApproved).length > 8 && (
+                      <div className="text-center mt-4">
+                        <p className="text-sm text-gray-500">
+                          ... and {galleryPhotos.filter(p => p.isApproved).length - 8} more approved photos
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

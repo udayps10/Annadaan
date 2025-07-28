@@ -23,6 +23,9 @@ export default function HomePage() {
                 <a href="#how-it-works" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   How It Works
                 </a>
+                <Link href="/gallery" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Gallery
+                </Link>
                 <a href="#about" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   About
                 </a>
@@ -183,10 +186,10 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
               <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
-                <span className="text-xl">📱</span>
+                <span className="text-xl">�</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Mobile-First Design</h3>
-              <p className="text-gray-600">Optimized for mobile devices with responsive design for on-the-go food rescue management.</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Responsive Design</h3>
+              <p className="text-gray-600">Modern responsive web interface that works seamlessly across all devices and screen sizes.</p>
             </div>
             
             <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
@@ -228,6 +231,74 @@ export default function HomePage() {
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Gamification & Rewards</h3>
               <p className="text-gray-600">Earn badges and certificates for your contributions to sharing good food and helping communities.</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Gallery Showcase */}
+      <section className="py-20 bg-gradient-to-br from-green-50 to-primary-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              Stories of Impact
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              See the beautiful moments when good food reaches people in need. Every story shows how our community comes together to make a difference.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            {/* Sample Gallery Items */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="aspect-square bg-gradient-to-br from-green-200 to-primary-200 flex items-center justify-center">
+                <div className="text-6xl">🍽️</div>
+              </div>
+              <div className="p-6">
+                <h3 className="font-semibold text-gray-900 mb-2">Community Lunch</h3>
+                <p className="text-sm text-gray-600 mb-3">45 families served warm meals at the downtown shelter</p>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>📍 Downtown Center</span>
+                  <span>👥 45 helped</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="aspect-square bg-gradient-to-br from-blue-200 to-purple-200 flex items-center justify-center">
+                <div className="text-6xl">🎂</div>
+              </div>
+              <div className="p-6">
+                <h3 className="font-semibold text-gray-900 mb-2">Holiday Distribution</h3>
+                <p className="text-sm text-gray-600 mb-3">Special holiday meals shared with seniors</p>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>📍 Senior Center</span>
+                  <span>👥 80 helped</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="aspect-square bg-gradient-to-br from-yellow-200 to-orange-200 flex items-center justify-center">
+                <div className="text-6xl">🥗</div>
+              </div>
+              <div className="p-6">
+                <h3 className="font-semibold text-gray-900 mb-2">School Program</h3>
+                <p className="text-sm text-gray-600 mb-3">Fresh produce distributed to student families</p>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>📍 Local School</span>
+                  <span>👥 120 helped</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <Link 
+              href="/gallery" 
+              className="inline-flex items-center bg-primary-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              📸 View Full Gallery
+            </Link>
           </div>
         </div>
       </section>

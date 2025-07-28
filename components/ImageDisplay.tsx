@@ -4,13 +4,22 @@ interface ImageDisplayProps {
   src: string;
   alt: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export default function ImageDisplay({ src, alt, className = '' }: ImageDisplayProps) {
+export default function ImageDisplay({ src, alt, className = '', style }: ImageDisplayProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if it's a data URL (base64)
+  // Check if src is defined and if it's a data URL (base64)
+  if (!src) {
+    return (
+      <div className={`flex items-center justify-center bg-gray-200 ${className}`}>
+        <span className="text-gray-500">No image</span>
+      </div>
+    );
+  }
+
   const isDataUrl = src.startsWith('data:');
   
   // For old file paths, try to fetch from the uploads directory first
@@ -52,9 +61,9 @@ export default function ImageDisplay({ src, alt, className = '' }: ImageDisplayP
         src={src}
         alt={alt}
         className={className}
+        style={{ ...style, display: isLoading ? 'none' : 'block' }}
         onError={handleImageError}
         onLoad={handleImageLoad}
-        style={{ display: isLoading ? 'none' : 'block' }}
       />
     </div>
   );

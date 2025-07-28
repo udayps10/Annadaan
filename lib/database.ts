@@ -14,7 +14,6 @@ export async function getDbConnection() {
   if (!connection) {
     try {
       connection = await mysql.createConnection(dbConfig);
-      console.log('Database connected successfully');
     } catch (error) {
       console.error('Database connection failed:', error);
       throw error;
@@ -107,13 +106,42 @@ export async function initializeDatabase() {
       pickup_time DATETIME,
       notes TEXT,
       status ENUM('pending', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending',
+      message TEXT,
+      requested_pickup_time DATETIME,
+      vendor_response TEXT,
+      pickup_photo_url LONGTEXT,
+      pickup_photo_filename VARCHAR(255),
+      pickup_notes TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (listing_id) REFERENCES food_listings(id) ON DELETE CASCADE,
       FOREIGN KEY (ngo_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
 
-  console.log('Database tables initialized successfully');
+  // Create impact_photos table for gallery
+  await conn.execute(`
+    CREATE TABLE IF NOT EXISTS impact_photos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      description TEXT NOT NULL,
+      location VARCHAR(255),
+      photo_url LONGTEXT NOT NULL,
+      photo_filename VARCHAR(255),
+      people_helped INT DEFAULT 0,
+      tags JSON,
+      date_shared DATETIME DEFAULT CURRENT_TIMESTAMP,
+      is_approved BOOLEAN DEFAULT FALSE,
+      is_public BOOLEAN DEFAULT TRUE,
+      likes INT DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      INDEX idx_approved_public (is_approved, is_public),
+      INDEX idx_date_shared (date_shared)
+    )
+  `);
 }
 
 export async function executeQuery(query: string, params: any[] = []) {
