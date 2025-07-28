@@ -3,6 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import ImageDisplay from '@/components/ImageDisplay'
+import { useAlert } from '../../../hooks/useAlert'
+import { AlertModal } from '../../../components/AlertModal'
+import { usePrompt } from '../../../hooks/usePrompt'
+import { PromptModal } from '../../../components/PromptModal'
 
 interface FoodListing {
   id: number
@@ -33,6 +37,8 @@ interface PickupRequest {
 }
 
 export default function VendorDashboard() {
+  const { alertState, showSuccess, showError, hideAlert } = useAlert()
+  const { promptState, showPrompt, handleConfirm, handleCancel } = usePrompt()
   const [myListings, setMyListings] = useState<FoodListing[]>([])
   const [pickupRequests, setPickupRequests] = useState<PickupRequest[]>([])
   const [loading, setLoading] = useState(true)
@@ -169,7 +175,7 @@ export default function VendorDashboard() {
       })
 
       if (response.ok) {
-        alert('Food listing added successfully!')
+        showSuccess('Food listing added successfully!')
         setNewListing({
           title: '',
           description: '',
@@ -183,10 +189,10 @@ export default function VendorDashboard() {
         fetchData() // Refresh data
       } else {
         const data = await response.json()
-        alert(data.message || 'Failed to add listing')
+        showError(data.message || 'Failed to add listing')
       }
     } catch (error) {
-      alert('Error adding listing')
+      showError('Error adding listing')
     }
   }
 
@@ -206,14 +212,14 @@ export default function VendorDashboard() {
       })
 
       if (apiResponse.ok) {
-        alert(`Request ${status} successfully!`)
+        showSuccess(`Request ${status} successfully!`)
         fetchData() // Refresh data
       } else {
         const data = await apiResponse.json()
-        alert(data.message || 'Failed to update request')
+        showError(data.message || 'Failed to update request')
       }
     } catch (error) {
-      alert('Error updating request')
+      showError('Error updating request')
     }
   }
 
@@ -230,14 +236,38 @@ export default function VendorDashboard() {
       })
 
       if (response.ok) {
-        alert('Listing status updated successfully!')
+        showSuccess('Listing status updated successfully!')
         fetchData() // Refresh data
       } else {
         const data = await response.json()
-        alert(data.message || 'Failed to update listing')
+        showError(data.message || 'Failed to update listing')
       }
     } catch (error) {
-      alert('Error updating listing')
+      showError('Error updating listing')
+    }
+  }
+
+  const handleApproveRequest = async (requestId: number) => {
+    const response = await showPrompt(
+      'Approve Request',
+      'Enter response message (optional):',
+      { placeholder: 'Optional message for the NGO...' }
+    )
+    
+    if (response !== null) {
+      handleRequestResponse(requestId, 'approved', response)
+    }
+  }
+
+  const handleRejectRequest = async (requestId: number) => {
+    const reason = await showPrompt(
+      'Reject Request',
+      'Enter rejection reason (optional):',
+      { placeholder: 'Optional reason for rejection...' }
+    )
+    
+    if (reason !== null) {
+      handleRequestResponse(requestId, 'rejected', reason)
     }
   }
 
@@ -528,19 +558,13 @@ export default function VendorDashboard() {
                     {request.status === 'pending' && (
                       <div className="flex space-x-2 mt-3">
                         <button
-                          onClick={() => {
-                            const response = prompt('Enter response message (optional):') || ''
-                            handleRequestResponse(request.id, 'approved', response)
-                          }}
+                          onClick={() => handleApproveRequest(request.id)}
                           className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() => {
-                            const response = prompt('Enter rejection reason (optional):') || ''
-                            handleRequestResponse(request.id, 'rejected', response)
-                          }}
+                          onClick={() => handleRejectRequest(request.id)}
                           className="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
                         >
                           Reject
@@ -576,6 +600,25 @@ export default function VendorDashboard() {
           </div>
         </div>
       </div>
+      
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={hideAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+      />
+      
+      <PromptModal
+        isOpen={promptState.isOpen}
+        onClose={handleCancel}
+        onConfirm={handleConfirm}
+        title={promptState.title}
+        message={promptState.message}
+        placeholder={promptState.placeholder}
+        defaultValue={promptState.defaultValue}
+        type={promptState.type}
+      />
     </div>
   )
 }

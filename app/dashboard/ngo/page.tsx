@@ -3,6 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import ImageDisplay from '@/components/ImageDisplay'
+import { useAlert } from '../../../hooks/useAlert'
+import { AlertModal } from '../../../components/AlertModal'
+import { usePrompt } from '../../../hooks/usePrompt'
+import { PromptModal } from '../../../components/PromptModal'
 
 interface FoodListing {
   id: number
@@ -32,6 +36,8 @@ interface PickupRequest {
 }
 
 export default function NGODashboard() {
+  const { alertState, showSuccess, showError, showWarning, hideAlert } = useAlert()
+  const { promptState, showPrompt, handleConfirm, handleCancel } = usePrompt()
   const [foodListings, setFoodListings] = useState<FoodListing[]>([])
   const [pickupRequests, setPickupRequests] = useState<PickupRequest[]>([])
   const [loading, setLoading] = useState(true)
@@ -147,8 +153,27 @@ export default function NGODashboard() {
   const requestPickup = async (listingId: number) => {
     try {
       const token = localStorage.getItem('token')
-      const message = prompt('Enter a message for the vendor (optional):') || ''
-      const pickupTime = prompt('Preferred pickup time (YYYY-MM-DD HH:MM):') || ''
+      
+      // Get message from user using modal
+      const message = await showPrompt(
+        'Send Pickup Request',
+        'Enter a message for the vendor (optional):',
+        { placeholder: 'Optional message for the vendor...' }
+      )
+      
+      if (message === null) return // User cancelled
+      
+      // Get pickup time from user using modal
+      const pickupTime = await showPrompt(
+        'Preferred Pickup Time',
+        'Preferred pickup time:',
+        { 
+          placeholder: 'YYYY-MM-DD HH:MM',
+          type: 'datetime-local'
+        }
+      )
+      
+      if (pickupTime === null) return // User cancelled
 
       const response = await fetch('/api/pickup-requests', {
         method: 'POST',
@@ -164,14 +189,14 @@ export default function NGODashboard() {
       })
 
       if (response.ok) {
-        alert('Pickup request sent successfully!')
+        showSuccess('Pickup request sent successfully!')
         fetchData() // Refresh data
       } else {
         const data = await response.json()
-        alert(data.message || 'Failed to send pickup request')
+        showError(data.message || 'Failed to send pickup request')
       }
     } catch (error) {
-      alert('Error sending pickup request')
+      showError('Error sending pickup request')
     }
   }
 
@@ -186,7 +211,7 @@ export default function NGODashboard() {
       fileInput.onchange = async (e: any) => {
         const file = e.target.files[0]
         if (!file) {
-          alert('Please select a photo to upload')
+          showWarning('Please select a photo to upload')
           return
         }
 
@@ -213,8 +238,17 @@ export default function NGODashboard() {
 
           const uploadResult = await uploadResponse.json()
 
-          // Get pickup notes from user
-          const notes = prompt('Add any notes about the pickup (optional):') || ''
+          // Get pickup notes from user using modal
+          const notes = await showPrompt(
+            'Pickup Notes',
+            'Add any notes about the pickup (optional):',
+            { placeholder: 'Optional notes about the pickup...' }
+          )
+          
+          if (notes === null) {
+            setUploadingPhoto(null)
+            return // User cancelled
+          }
 
           // Mark pickup as completed with photo
           const response = await fetch(`/api/pickup-requests/${requestId}`, {
@@ -232,14 +266,14 @@ export default function NGODashboard() {
           })
 
           if (response.ok) {
-            alert('Pickup marked as completed successfully with photo verification!')
+            showSuccess('Pickup marked as completed successfully with photo verification!')
             fetchData() // Refresh data
           } else {
             const data = await response.json()
-            alert(data.message || 'Failed to update pickup status')
+            showError(data.message || 'Failed to update pickup status')
           }
         } catch (error: any) {
-          alert('Error: ' + error.message)
+          showError('Error: ' + error.message)
         } finally {
           setUploadingPhoto(null)
         }
@@ -248,7 +282,7 @@ export default function NGODashboard() {
       // Trigger file selection
       fileInput.click()
     } catch (error) {
-      alert('Error opening file selector')
+      showError('Error opening file selector')
       setUploadingPhoto(null)
     }
   }
@@ -468,6 +502,25 @@ export default function NGODashboard() {
           </div>
         </div>
       </div>
+      
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={hideAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+      />
+      
+      <PromptModal
+        isOpen={promptState.isOpen}
+        onClose={handleCancel}
+        onConfirm={handleConfirm}
+        title={promptState.title}
+        message={promptState.message}
+        placeholder={promptState.placeholder}
+        defaultValue={promptState.defaultValue}
+        type={promptState.type}
+      />
     </div>
   )
 }

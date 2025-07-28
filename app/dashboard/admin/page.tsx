@@ -1,8 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useAlert } from '../../../hooks/useAlert'
+import { AlertModal } from '../../../components/AlertModal'
 
 export default function AdminDashboard() {
+  const { alertState, showSuccess, showError, hideAlert } = useAlert()
   const [user, setUser] = useState<any>(null)
   const [listings, setListings] = useState<any[]>([])
   const [pickupRequests, setPickupRequests] = useState<any[]>([])
@@ -146,15 +149,15 @@ export default function AdminDashboard() {
       
       if (response.ok) {
         const data = await response.json()
-        alert(data.message)
+        showSuccess(data.message)
         fetchGalleryPhotos() // Refresh the gallery
       } else {
         const error = await response.json()
-        alert(error.message || 'Action failed')
+        showError(error.message || 'Action failed')
       }
     } catch (error) {
       console.error('Gallery action failed:', error)
-      alert('Action failed')
+      showError('Action failed')
     }
   }
 
@@ -745,6 +748,14 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+      
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={hideAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+      />
     </div>
   )
 }

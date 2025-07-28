@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useAlert } from '../../../hooks/useAlert'
+import { AlertModal } from '../../../components/AlertModal'
 
 export default function GalleryUploadPage() {
+  const { alertState, showSuccess, showError, showWarning, hideAlert } = useAlert()
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
@@ -78,12 +81,12 @@ export default function GalleryUploadPage() {
     e.preventDefault()
     
     if (!selectedFile) {
-      alert('Please select a photo to upload')
+      showWarning('Please select a photo to upload')
       return
     }
 
     if (!formData.title || !formData.description) {
-      alert('Please fill in the title and description')
+      showWarning('Please fill in the title and description')
       return
     }
 
@@ -133,10 +136,10 @@ export default function GalleryUploadPage() {
         throw new Error(galleryError.message || 'Failed to save gallery entry')
       }
 
-      alert('Your impact story has been shared successfully! It will be visible after admin approval.')
+      showSuccess('Your impact story has been shared successfully! It will be visible after admin approval.')
       router.push('/gallery')
     } catch (error: any) {
-      alert('Error: ' + error.message)
+      showError('Error: ' + error.message)
     } finally {
       setLoading(false)
     }
@@ -413,6 +416,14 @@ export default function GalleryUploadPage() {
           </ul>
         </div>
       </div>
+      
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={hideAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+      />
     </div>
   )
 }
