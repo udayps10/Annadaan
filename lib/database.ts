@@ -6,27 +6,56 @@ export const dbConfig = {
   password: process.env.DB_PASSWORD || 'rooor',
   database: process.env.DB_NAME || 'foodrescue',
   port: parseInt(process.env.DB_PORT || '3306'),
+  // Connection pool settings
+  connectionLimit: 10,
+  queueLimit: 0,
+  // Keep alive settings to prevent connection timeout
+  keepAliveInitialDelay: 0,
+  enableKeepAlive: true,
+  // Timeout settings
+  acquireTimeout: 60000,
+  timeout: 60000,
+  // Additional settings for better stability
+  reconnect: true,
+  charset: 'utf8mb4',
+  timezone: 'Z'
 };
 
-let connection: mysql.Connection | null = null;
+let pool: mysql.Pool | null = null;
 
 export async function getDbConnection() {
-  if (!connection) {
+  if (!pool) {
     try {
-      connection = await mysql.createConnection(dbConfig);
+      pool = mysql.createPool(dbConfig);
+      console.log('Database connection pool created');
     } catch (error) {
-      console.error('Database connection failed:', error);
+      console.error('Database pool creation failed:', error);
       throw error;
     }
   }
-  return connection;
+  return pool;
+}
+
+// Function to test and ensure connection is alive
+export async function ensureConnection() {
+  try {
+    const pool = await getDbConnection();
+    // Test the connection with a simple query
+    await pool.execute('SELECT 1');
+    return pool;
+  } catch (error) {
+    console.error('Connection test failed, recreating pool:', error);
+    // Reset the pool and try again
+    pool = null;
+    return await getDbConnection();
+  }
 }
 
 export async function initializeDatabase() {
-  const conn = await getDbConnection();
+  const pool = await ensureConnection();
   
   // Create users table
-  await conn.execute(`
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
       email VARCHAR(255) UNIQUE NOT NULL,
@@ -45,7 +74,7 @@ export async function initializeDatabase() {
   `);
 
   // Create vendor_profiles table
-  await conn.execute(`
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS vendor_profiles (
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id INT UNIQUE NOT NULL,
@@ -60,7 +89,7 @@ export async function initializeDatabase() {
   `);
 
   // Create ngo_profiles table
-  await conn.execute(`
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS ngo_profiles (
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id INT UNIQUE NOT NULL,
@@ -77,7 +106,7 @@ export async function initializeDatabase() {
   `);
 
   // Create food_listings table
-  await conn.execute(`
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS food_listings (
       id INT AUTO_INCREMENT PRIMARY KEY,
       vendor_id INT NOT NULL,
@@ -97,7 +126,7 @@ export async function initializeDatabase() {
   `);
 
   // Create pickup_requests table
-  await conn.execute(`
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS pickup_requests (
       id INT AUTO_INCREMENT PRIMARY KEY,
       listing_id INT NOT NULL,
@@ -120,7 +149,7 @@ export async function initializeDatabase() {
   `);
 
   // Create impact_photos table for gallery
-  await conn.execute(`
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS impact_photos (
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id INT NOT NULL,
@@ -144,8 +173,61 @@ export async function initializeDatabase() {
   `);
 }
 
-export async function executeQuery(query: string, params: any[] = []) {
-  const conn = await getDbConnection();
-  const [results] = await conn.execute(query, params);
-  return results;
+export async function executeQuery(query: string, params: any[] = [], retries: number = 3) {
+  let lastError;
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const pool = await ensureConnection();
+      const [results] = await pool.execute(query, params);
+      return results;
+    } catch (error: any) {
+      lastError = error;
+      console.error(`Database query attempt ${attempt} failed:`, error.message);
+      
+      // Check if it's a connection-related error
+      if (error.code === 'PROTOCOL_CONNECTION_LOST' || 
+          error.code === 'ECONNRESET' || 
+          error.code === 'PROTOCOL_ENQUEUE_AFTER_QUIT' ||
+          error.message.includes('connection is in closed state')) {
+        console.log('Connection lost, resetting pool...');
+        pool = null;
+        
+        // Wait a bit before retrying (exponential backoff)
+        if (attempt < retries) {
+          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        }
+      } else {
+        // If it's not a connection error, don't retry
+        throw error;
+      }
+    }
+  }
+  
+  // If all retries failed, throw the last error
+  throw lastError;
+}
+
+// Helper function to gracefully close the pool
+export async function closePool() {
+  if (pool) {
+    await pool.end();
+    pool = null;
+    console.log('Database connection pool closed');
+  }
+}
+
+// Health check function
+export async function healthCheck() {
+  try {
+    const result = await executeQuery('SELECT 1 as health_check');
+    return { healthy: true, timestamp: new Date().toISOString() };
+  } catch (error) {
+    console.error('Database health check failed:', error);
+    return { 
+      healthy: false, 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString() 
+    };
+  }
 }
