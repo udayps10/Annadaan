@@ -66,7 +66,7 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-primary-600 mb-2">🍽️ FoodRescue</h1>
+            <h1 className="text-3xl font-bold text-primary-600 mb-2">🍽️ Annadaan</h1>
           </Link>
           <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
           <p className="mt-2 text-gray-600">Sign in to your account to continue</p>

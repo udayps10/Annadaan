@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'FoodRescue - Sharing Good Food Together',
+  title: 'Annadaan - Where every extra plate finds a purpose',
   description: 'Connect food providers with NGOs and shelters to share available food and strengthen communities.',
   keywords: 'food rescue, food donation, available food, NGO, food sharing, hunger relief',
 }
