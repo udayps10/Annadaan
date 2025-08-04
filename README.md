@@ -1,4 +1,4 @@
-# 🍽️ FoodRescue - Food Sharing Platform
+# 🍽️ Annadaan - Food Sharing Platform
 
 A Next.js application that connects food vendors with NGOs and shelters to share surplus food and reduce waste.
 

@@ -12,7 +12,7 @@ export default function HomePage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <h1 className="text-2xl font-bold text-primary-600">🍽️ FoodRescue</h1>
+                <h1 className="text-2xl font-bold text-primary-600">🍽️ Annadaan</h1>
               </div>
             </div>
             <div className="hidden md:block">
@@ -329,7 +329,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">🍽️ FoodRescue</h3>
+              <h3 className="text-xl font-bold mb-4">🍽️ Annadaan</h3>
               <p className="text-gray-400">
                 Sharing good food and strengthening communities through technology and collaboration.
               </p>
