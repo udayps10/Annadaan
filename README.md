@@ -1,40 +1,69 @@
 # 🍽️ FoodRescue - Food Sharing Platform
 
-A simple Next.js application that connects food vendors with NGOs and shelters to share surplus food and reduce waste.
+A Next.js application that connects food vendors with NGOs and shelters to share surplus food and reduce waste.
 
-## 🚀 Quick Start (For Demo)
+## ✨ Features
+
+- **Multi-role Authentication**: Separate dashboards for vendors, NGOs, and administrators
+- **Food Listing Management**: Vendors can create and manage food offerings
+- **Pickup Request System**: NGOs can browse and request available food
+- **Admin Panel**: Complete oversight with user verification and content moderation
+- **Document Verification**: Secure verification system for user accounts
+- **Real-time Updates**: Live activity feeds and notifications
+- **Mobile-friendly**: Responsive design for all devices
+
+## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js (v18 or later)
-- MySQL Server
-- npm
+- MySQL Server (v8.0 or later)
+- npm or yarn
 
 ### Installation
 
-1. **Install dependencies**
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/FoodRescue.git
+   cd FoodRescue
+   ```
+
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. **Start MySQL** (make sure MySQL is running on your system)
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Edit `.env.local` with your database credentials:
+   ```env
+   DB_HOST=localhost
+   DB_USER=root
+   DB_PASSWORD=your_password
+   DB_NAME=foodrescue
+   DB_PORT=3306
+   JWT_SECRET=your-secure-jwt-secret
+   ```
 
-3. **Create database**
+4. **Create database**
    ```bash
    mysql -u root -p -e "CREATE DATABASE foodrescue;"
    ```
 
-4. **Start the development server**
+5. **Start the development server**
    ```bash
    npm run dev
    ```
 
-5. **Initialize the database with sample data**
-   - Open your browser and go to: `http://localhost:3000/api/setup`
-   - This will create tables and sample users
+6. **Initialize the database**
+   - Visit: `http://localhost:3000/api/setup`
+   - This creates tables and sample accounts
 
 ### 🎯 Demo Accounts
 
-After running the setup endpoint, you can login with these accounts:
+After database initialization:
 
 - **Admin**: `admin@foodrescue.com` / `admin123`
 - **Vendor**: `vendor@demo.com` / `admin123`
@@ -59,16 +88,74 @@ After running the setup endpoint, you can login with these accounts:
 
 ### 🛠️ Configuration
 
-Create a `.env.local` file with your database settings:
+Environment variables (`.env.local`):
 
 ```env
+# Database Configuration
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=foodrescue
 DB_PORT=3306
-JWT_SECRET=your-secret-key
+
+# Security
+JWT_SECRET=your-secure-jwt-secret-key
+
+# Optional: Database connection settings
+DB_CONNECTION_LIMIT=10
+DB_ACQUIRE_TIMEOUT=60000
+DB_TIMEOUT=60000
 ```
+
+## 🚀 Production Deployment
+
+### Environment Setup
+1. Set up a production MySQL database
+2. Configure environment variables:
+   ```env
+   DB_HOST=your-production-db-host
+   DB_USER=your-production-db-user
+   DB_PASSWORD=your-secure-db-password
+   DB_NAME=foodrescue_production
+   JWT_SECRET=your-very-secure-jwt-secret
+   ```
+
+### Deployment Options
+
+#### Vercel (Recommended)
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy automatically
+
+#### Docker
+```bash
+# Build the application
+npm run build
+
+# Create production image
+docker build -t foodrescue .
+
+# Run with environment variables
+docker run -p 3000:3000 --env-file .env.production foodrescue
+```
+
+#### Traditional Server
+```bash
+# Build the application
+npm run build
+
+# Start production server
+npm start
+```
+
+### Database Migration
+For production, run the setup endpoint once:
+```
+https://yourdomain.com/api/setup
+```
+
+**Important**: Disable or secure the setup endpoint in production!
 
 ### 📁 Project Structure
 

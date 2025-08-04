@@ -226,12 +226,12 @@ export default function NGODashboard() {
             return
           }
 
-          console.log('Compressing pickup verification photo...')
-          const compressedFile = await compressForPickup(file)
-
+          // Compress the image before upload
+          const compressedPhoto = await compressForPickup(file)
+          
           // Upload the compressed photo
           const formData = new FormData()
-          formData.append('photo', compressedFile)
+          formData.append('photo', compressedPhoto)
 
           const token = localStorage.getItem('token')
           const uploadResponse = await fetch('/api/upload-photo', {

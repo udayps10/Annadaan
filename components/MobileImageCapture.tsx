@@ -34,7 +34,6 @@ export function MobileImageCapture({
         return
       }
 
-      console.log('Compressing captured image...')
       // Compress the image
       const compressedFile = await compressForPickup(file)
       

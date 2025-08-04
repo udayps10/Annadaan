@@ -5,20 +5,20 @@ export async function GET(request: NextRequest) {
   try {
     await initializeDatabase();
     
-    // Insert sample admin user
+        // Insert sample admin user
     const hashedPassword = '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewwLhXVMXCrLWKoG'; // password: admin123
     
     await executeQuery(
-      `INSERT IGNORE INTO users (email, password, name, role) 
-       VALUES (?, ?, ?, ?)`,
-      ['admin@foodrescue.com', hashedPassword, 'Admin User', 'admin']
+      `INSERT IGNORE INTO users (email, password, name, full_name, role, status) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      ['admin@foodrescue.com', hashedPassword, 'Admin User', 'Admin User', 'admin', 'approved']
     );
 
     // Insert sample vendor
     const vendorResult = await executeQuery(
-      `INSERT IGNORE INTO users (email, password, name, role) 
-       VALUES (?, ?, ?, ?)`,
-      ['vendor@demo.com', hashedPassword, 'Demo Restaurant', 'vendor']
+      `INSERT IGNORE INTO users (email, password, name, full_name, role, status) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      ['vendor@demo.com', hashedPassword, 'Demo Restaurant', 'Demo Restaurant', 'vendor', 'approved']
     ) as any;
 
     if (vendorResult.insertId) {
@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
 
     // Insert sample NGO
     const ngoResult = await executeQuery(
-      `INSERT IGNORE INTO users (email, password, name, role) 
-       VALUES (?, ?, ?, ?)`,
-      ['ngo@demo.com', hashedPassword, 'Hope Shelter', 'ngo']
+      `INSERT IGNORE INTO users (email, password, name, full_name, role, status) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      ['ngo@demo.com', hashedPassword, 'Hope Shelter', 'Hope Shelter', 'ngo', 'approved']
     ) as any;
 
     if (ngoResult.insertId) {

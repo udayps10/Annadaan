@@ -1,12 +1,30 @@
 {
-  "name": "foodrescue-app",
+  "name": "foodrescue",
   "version": "1.0.0",
+  "description": "A Next.js application connecting food vendors with NGOs and shelters to share surplus food and reduce waste",
   "private": true,
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/FoodRescue.git"
+  },
+  "keywords": [
+    "food-rescue",
+    "food-sharing",
+    "nextjs",
+    "typescript",
+    "mysql",
+    "sustainability"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "setup": "node -e \"console.log('Visit http://localhost:3000/api/setup to initialize the database')\""
   },
   "dependencies": {
     "@types/multer": "^2.0.0",

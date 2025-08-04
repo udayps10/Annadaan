@@ -15,6 +15,7 @@ export default function AdminDashboard() {
   const [userStats, setUserStats] = useState<any>({})
   const [rescueStats, setRescueStats] = useState<any>({})
   const [recentUsers, setRecentUsers] = useState<any[]>([])
+  const [pendingVerifications, setPendingVerifications] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
@@ -37,6 +38,7 @@ export default function AdminDashboard() {
     fetchData()
     fetchActivities()
     fetchGalleryPhotos()
+    fetchPendingVerifications()
     
     // Set up auto-refresh
     if (autoRefresh) {
@@ -44,6 +46,7 @@ export default function AdminDashboard() {
         fetchActivities()
         fetchData()
         fetchGalleryPhotos()
+        fetchPendingVerifications()
       }, 30000) // Refresh every 30 seconds
       setRefreshInterval(interval)
     }
@@ -133,6 +136,26 @@ export default function AdminDashboard() {
     }
   }, [])
 
+  const fetchPendingVerifications = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+      
+      const response = await fetch('/api/admin/verification', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setPendingVerifications(data.users || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch pending verifications:', error)
+    }
+  }, [])
+
   const handleGalleryAction = async (photoId: number, action: string) => {
     try {
       const token = localStorage.getItem('token')
@@ -161,10 +184,39 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleVerificationAction = async (userId: number, action: string, adminNotes?: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+      
+      const response = await fetch('/api/admin/verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId, action, adminNotes })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        showSuccess(data.message)
+        fetchPendingVerifications() // Refresh the verification list
+      } else {
+        const error = await response.json()
+        showError(error.message || 'Verification action failed')
+      }
+    } catch (error) {
+      console.error('Verification action failed:', error)
+      showError('Verification action failed')
+    }
+  }
+
   const handleRefresh = () => {
     fetchData()
     fetchActivities()
     fetchGalleryPhotos()
+    fetchPendingVerifications()
   }
 
   const toggleAutoRefresh = () => {
@@ -174,6 +226,7 @@ export default function AdminDashboard() {
         fetchActivities()
         fetchData()
         fetchGalleryPhotos()
+        fetchPendingVerifications()
       }, 30000)
       setRefreshInterval(interval)
     } else {
@@ -285,6 +338,7 @@ export default function AdminDashboard() {
             <nav className="-mb-px flex space-x-8 px-6">
               {[
                 { id: 'overview', name: 'Overview', icon: '📊', count: null },
+                { id: 'verifications', name: 'Verifications', icon: '✅', count: pendingVerifications.length },
                 { id: 'activities', name: 'Activities', icon: '📝', count: activities.length },
                 { id: 'deliveries', name: 'Deliveries', icon: '🚚', count: deliveries.length },
                 { id: 'gallery', name: 'Gallery', icon: '📸', count: galleryPhotos.filter(p => !p.isApproved).length },
@@ -522,6 +576,168 @@ export default function AdminDashboard() {
                       }`}>
                         {user.role.toUpperCase()}
                       </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Verifications Tab */}
+        {activeTab === 'verifications' && (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">User Verification Management</h2>
+              <span className="text-sm text-gray-500">
+                {pendingVerifications.length} pending verification{pendingVerifications.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            
+            {pendingVerifications.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-4">✅</div>
+                <p className="text-gray-500">No pending verifications</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  All users are verified or no new registrations
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {pendingVerifications.map((user) => (
+                  <div key={user.id} className="border border-yellow-200 bg-yellow-50 rounded-lg p-6">
+                    {/* User Basic Info */}
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{user.name}</h3>
+                        <p className="text-gray-600">{user.email}</p>
+                        <p className="text-sm text-gray-500">
+                          Registered: {formatDate(user.created_at)} • Status: 
+                          <span className="ml-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                            {user.status}
+                          </span>
+                        </p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        user.role === 'vendor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                      }`}>
+                        {user.role.toUpperCase()}
+                      </span>
+                    </div>
+
+                    {/* Profile Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3">Profile Information</h4>
+                        <div className="space-y-2 text-sm">
+                          <div><span className="font-medium">Phone:</span> {user.phone || 'Not provided'}</div>
+                          <div><span className="font-medium">Address:</span> {user.address || 'Not provided'}</div>
+                          {user.role === 'vendor' && (
+                            <>
+                              <div><span className="font-medium">Business Name:</span> {user.business_name || 'Not provided'}</div>
+                              <div><span className="font-medium">Business Type:</span> {user.business_type || 'Not provided'}</div>
+                              <div><span className="font-medium">Registration Number:</span> {user.registration_number || 'Not provided'}</div>
+                            </>
+                          )}
+                          {user.role === 'ngo' && (
+                            <>
+                              <div><span className="font-medium">Organization Name:</span> {user.organization_name || 'Not provided'}</div>
+                              <div><span className="font-medium">License Number:</span> {user.license_number || 'Not provided'}</div>
+                              <div><span className="font-medium">Service Areas:</span> {user.service_areas || 'Not provided'}</div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Documents */}
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-3">Uploaded Documents</h4>
+                        {user.documents && user.documents.length > 0 ? (
+                          <div className="space-y-2">
+                            {user.documents.map((doc: any) => (
+                              <div key={doc.id} className="flex items-center justify-between bg-white p-3 rounded border">
+                                <div>
+                                  <p className="font-medium text-sm">{doc.document_type.replace('_', ' ').toUpperCase()}</p>
+                                  <p className="text-xs text-gray-500">
+                                    {doc.file_type} • Uploaded {formatDate(doc.uploaded_at)}
+                                  </p>
+                                </div>
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => {
+                                      const token = localStorage.getItem('token');
+                                      window.open(`/api/admin/verification/documents/${doc.id}/view?token=${token}`, '_blank');
+                                    }}
+                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                  >
+                                    View
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      const token = localStorage.getItem('token');
+                                      window.open(`/api/admin/verification/documents/${doc.id}/download?token=${token}`, '_blank');
+                                    }}
+                                    className="text-green-600 hover:text-green-800 text-sm font-medium"
+                                  >
+                                    Download
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 text-sm">No documents uploaded</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Admin Notes */}
+                    {user.admin_notes && (
+                      <div className="mb-4">
+                        <h4 className="font-medium text-gray-900 mb-2">Previous Admin Notes</h4>
+                        <p className="text-sm text-gray-600 bg-gray-100 p-3 rounded">{user.admin_notes}</p>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-gray-200">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Admin Notes (optional)
+                        </label>
+                        <textarea
+                          id={`notes-${user.id}`}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          rows={2}
+                          placeholder="Add any notes about this verification..."
+                        />
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+                        <button
+                          onClick={() => {
+                            const textarea = document.getElementById(`notes-${user.id}`) as HTMLTextAreaElement;
+                            const notes = textarea?.value || '';
+                            if (confirm('Are you sure you want to approve this user?')) {
+                              handleVerificationAction(user.id, 'approve', notes);
+                            }
+                          }}
+                          className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                        >
+                          ✅ Approve
+                        </button>
+                        <button
+                          onClick={() => {
+                            const textarea = document.getElementById(`notes-${user.id}`) as HTMLTextAreaElement;
+                            const notes = textarea?.value || '';
+                            if (confirm('Are you sure you want to reject this user? This action cannot be easily undone.')) {
+                              handleVerificationAction(user.id, 'reject', notes);
+                            }
+                          }}
+                          className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+                        >
+                          ❌ Reject
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

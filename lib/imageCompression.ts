@@ -22,12 +22,7 @@ export const compressImage = async (
   }
 
   try {
-    console.log('Original file size:', (file.size / 1024 / 1024).toFixed(2), 'MB')
-    
     const compressedFile = await imageCompression(file, defaultOptions)
-    
-    console.log('Compressed file size:', (compressedFile.size / 1024 / 1024).toFixed(2), 'MB')
-    console.log('Compression ratio:', ((1 - compressedFile.size / file.size) * 100).toFixed(1), '%')
     
     return compressedFile
   } catch (error) {

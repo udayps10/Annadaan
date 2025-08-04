@@ -35,7 +35,20 @@ export default function LoginPage() {
         throw new Error(data.message || 'Login failed')
       }
 
-      // Store user data and token
+      // Check if user requires verification
+      if (data.requiresVerification) {
+        // Store token temporarily for verification status access
+        localStorage.setItem('temp_token', data.token)
+        localStorage.setItem('userType', data.user.role)
+        localStorage.setItem('userEmail', data.user.email)
+        localStorage.setItem('userName', data.user.name)
+        
+        // Redirect to verification status page
+        window.location.href = '/verification/status'
+        return
+      }
+
+      // Store user data and token for verified users
       localStorage.setItem('userType', data.user.role)
       localStorage.setItem('userEmail', data.user.email)
       localStorage.setItem('userName', data.user.name)

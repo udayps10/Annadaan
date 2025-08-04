@@ -1,9 +1,9 @@
 import mysql from 'mysql2/promise';
 
 export const dbConfig = {
-  host: process.env.DB_HOST || '192.168.1.21',
+  host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'rooor',
+  password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'foodrescue',
   port: parseInt(process.env.DB_PORT || '3306'),
   // Connection pool settings
@@ -12,11 +12,7 @@ export const dbConfig = {
   // Keep alive settings to prevent connection timeout
   keepAliveInitialDelay: 0,
   enableKeepAlive: true,
-  // Timeout settings
-  acquireTimeout: 60000,
-  timeout: 60000,
-  // Additional settings for better stability
-  reconnect: true,
+  // Remove deprecated timeout settings
   charset: 'utf8mb4',
   timezone: 'Z'
 };
@@ -27,7 +23,7 @@ export async function getDbConnection() {
   if (!pool) {
     try {
       pool = mysql.createPool(dbConfig);
-      console.log('Database connection pool created');
+      // Database connection pool created successfully
     } catch (error) {
       console.error('Database pool creation failed:', error);
       throw error;
@@ -62,7 +58,7 @@ export async function initializeDatabase() {
       password VARCHAR(255) NOT NULL,
       full_name VARCHAR(255) NOT NULL,
       phone VARCHAR(20),
-      user_type ENUM('vendor', 'ngo', 'volunteer', 'admin') NOT NULL,
+      role ENUM('vendor', 'ngo', 'volunteer', 'admin') NOT NULL,
       status ENUM('pending', 'approved', 'rejected', 'suspended') DEFAULT 'pending',
       address TEXT,
       latitude DECIMAL(10, 8),
@@ -190,7 +186,7 @@ export async function executeQuery(query: string, params: any[] = [], retries: n
           error.code === 'ECONNRESET' || 
           error.code === 'PROTOCOL_ENQUEUE_AFTER_QUIT' ||
           error.message.includes('connection is in closed state')) {
-        console.log('Connection lost, resetting pool...');
+        // Connection lost, resetting pool
         pool = null;
         
         // Wait a bit before retrying (exponential backoff)
@@ -213,7 +209,7 @@ export async function closePool() {
   if (pool) {
     await pool.end();
     pool = null;
-    console.log('Database connection pool closed');
+    // Database connection pool closed
   }
 }
 

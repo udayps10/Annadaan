@@ -4,12 +4,34 @@ import { hashPassword, generateToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name, role } = await request.json();
+    const { 
+      email, 
+      password, 
+      name, 
+      role, 
+      phone, 
+      address, 
+      full_name,
+      // Vendor specific
+      businessName,
+      businessType,
+      businessDescription,
+      website,
+      averageDailyAvailable,
+      // NGO specific
+      organizationName,
+      registrationNumber,
+      focusArea,
+      capacity,
+      serviceAreaRadius,
+      areaOfOperation,
+      organizationDescription
+    } = await request.json();
 
     // Validate required fields
-    if (!email || !password || !name || !role) {
+    if (!email || !password || !name || !role || !phone) {
       return NextResponse.json({ 
-        message: 'Missing required fields: email, password, name, and role are required' 
+        message: 'Missing required fields: email, password, name, role, and phone are required' 
       }, { status: 400 });
     }
 
@@ -26,25 +48,75 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Insert user (matching the database schema)
+    // Start with pending status for all users (we can update admin users later)
+    const userStatus = 'pending';
+
+    // Insert user (matching actual database schema)
     const userResult = await executeQuery(
-      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-      [name, email, hashedPassword, role]
+      'INSERT INTO users (name, full_name, email, password, role, phone, address, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, name, email, hashedPassword, role, phone, address, userStatus]
     ) as any;
 
     const userId = userResult.insertId;
 
+    // Create role-specific profile (skip for admin users)
+    if (role === 'vendor') {
+      await executeQuery(
+        'INSERT INTO vendor_profiles (user_id, business_name, business_type, address, phone, description, website, average_daily_available) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          userId,
+          businessName || null,
+          businessType || 'other',
+          address || null,
+          phone || null,
+          businessDescription || null,
+          website || null,
+          averageDailyAvailable || 0
+        ]
+      );
+    } else if (role === 'ngo') {
+      await executeQuery(
+        'INSERT INTO ngo_profiles (user_id, organization_name, registration_number, focus_area, capacity, address, phone, description, service_area_radius, area_of_operation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          userId,
+          organizationName || null,
+          registrationNumber || null,
+          focusArea || 'general',
+          capacity || 50,
+          address || null,
+          phone || null,
+          organizationDescription || null,
+          serviceAreaRadius || 10,
+          areaOfOperation || null
+        ]
+      );
+    }
+
     // Generate token
     const token = generateToken(userId, role);
 
+    // If it's an admin user, we can update their status to approved immediately after creation
+    if (role === 'admin') {
+      await executeQuery(
+        'UPDATE users SET status = ? WHERE id = ?',
+        ['approved', userId]
+      );
+    }
+
+    // Different messages for admin vs others
+    const message = role === 'admin' 
+      ? 'Admin account created successfully!'
+      : 'User registered successfully. Please complete document verification.';
+
     return NextResponse.json({
-      message: 'User registered successfully',
+      message,
       token,
       user: {
         id: userId,
         email,
         name,
-        role
+        role,
+        status: role === 'admin' ? 'approved' : userStatus
       }
     });
 
