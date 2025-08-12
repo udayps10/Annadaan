@@ -23,7 +23,7 @@ A Next.js application that connects food vendors with NGOs and shelters to share
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/FoodRescue.git
+   git clone -b foodrescue http://gogs.raunakcodes.me/Raunak/Annadaan
    cd FoodRescue
    ```
 

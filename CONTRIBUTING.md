@@ -5,7 +5,7 @@ Thank you for your interest in contributing to FoodRescue! This document provide
 ## 🛠️ Development Setup
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/yourusername/FoodRescue.git`
+2. Clone your fork: `git clone -b foodrescue http://gogs.raunakcodes.me/Raunak/Annadaan`
 3. Install dependencies: `npm install`
 4. Set up your local database and environment variables
 5. Run the development server: `npm run dev`
