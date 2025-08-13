@@ -128,7 +128,6 @@ public/uploads/
 *.crt
 
 # Database dumps
-*.sql
 database_schema.sql
 add_photo_columns.sql
 update_photo_column.sql

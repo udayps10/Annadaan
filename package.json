@@ -3,12 +3,7 @@
   "version": "1.0.0",
   "description": "A Next.js application connecting food vendors with NGOs and shelters to share surplus food and reduce waste",
   "private": true,
-  "author": "Your Name",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/yourusername/FoodRescue.git"
-  },
+  "author": "Raunak Singh",
   "keywords": [
     "food-rescue",
     "food-sharing",
