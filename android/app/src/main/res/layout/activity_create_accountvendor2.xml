@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/main1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:context=".CreateAccountActivity">
+
+        <androidx.cardview.widget.CardView
+
+            android:layout_width="370dp"
+            android:layout_marginStart="2dp"
+            android:layout_marginRight="9dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="15dp"
+            android:layout_weight="1"
+            app:cardBackgroundColor="@android:color/white"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="5dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="sans-serif"
+                    android:padding="20dp"
+                    android:text="Create Account"
+                    android:textColor="@color/black"
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:textColor="#2C2A2A"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="10dp"
+                    android:fontFamily="sans-serif"
+                    android:text="Join the food waste reduction\n                     platform"
+                    android:textSize="17sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginRight="10dp"
+                    android:background="@drawable/redrectangle"
+                    android:fontFamily="sans-serif"
+                    android:padding="10dp"
+                    android:text="Please upload requires\ndocuments: Business License,\nIdentity proof\n(ID/Passport), Address Proof"
+                    android:textColor="#E96D6D"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:padding="10dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginRight="10dp"
+                    android:text="Document Verification"
+                    android:textColor="@color/black"
+                    android:textSize="25sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginRight="10dp"
+
+                    android:fontFamily="sans-serif"
+                    android:padding="10dp"
+                    android:text="Please upload required\ndocuments for verification. All\ndocuments shold be clear and\nreadable. Accepted formats: PDF,JPG,PNG(max 10MB each)"
+                    android:textColor="#3C3A3A"
+                    android:textSize="20sp" />
+                <androidx.cardview.widget.CardView
+                    android:layout_gravity="center"
+                    android:layout_width="300dp"
+                    android:layout_height="300dp"
+                    android:layout_margin="32dp"
+                    android:backgroundTint="@android:color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:cardUseCompatPadding="true">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/black"
+                            android:layout_marginTop="2dp"
+                            android:textSize="15sp"
+                            android:padding="8dp"
+                            android:text="Business License*"/>
+                        <ImageView
+                            android:id="@+id/image1"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="30dp"
+                            android:background="@color/black"
+                            android:src="@drawable/upload" />
+                        <TextView
+                            android:layout_marginTop="10dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:textStyle="bold"
+                            android:textColor="@color/black"
+                            android:textSize="20sp"
+                            android:text="Click to upload Business\nLicense"/>
+                        <TextView
+                            android:layout_marginTop="10dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:textColor="#3A3939"
+                            android:textSize="15sp"
+                            android:layout_marginBottom="5dp"
+                            android:text="PDF,JPG,PNG up to 10MB"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+                <androidx.cardview.widget.CardView
+                    android:layout_gravity="center"
+                    android:layout_width="300dp"
+                    android:layout_height="300dp"
+                    android:layout_margin="32dp"
+                    android:backgroundTint="@android:color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:cardUseCompatPadding="true">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/black"
+                            android:layout_marginTop="2dp"
+                            android:textSize="15sp"
+                            android:padding="8dp"
+                            android:text="Identity proof (ID/Passport)*"/>
+                        <ImageView
+                            android:id="@+id/image2"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="30dp"
+                            android:background="@color/black"
+                            android:src="@drawable/upload" />
+                        <TextView
+                            android:layout_marginTop="10dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:textStyle="bold"
+                            android:textColor="@color/black"
+                            android:textSize="20sp"
+                            android:text="Click to upload Identity proof\n(ID/Passport)"/>
+                        <TextView
+                            android:layout_marginTop="10dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:textColor="#3A3939"
+                            android:textSize="15sp"
+                            android:layout_marginBottom="5dp"
+                            android:text="PDF,JPG,PNG up to 10MB"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+                <androidx.cardview.widget.CardView
+                    android:layout_gravity="center"
+                    android:layout_width="300dp"
+                    android:layout_height="300dp"
+                    android:layout_margin="32dp"
+                    android:backgroundTint="@android:color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:cardUseCompatPadding="true">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/black"
+                            android:layout_marginTop="2dp"
+                            android:textSize="15sp"
+                            android:padding="8dp"
+                            android:text="Address proof*"/>
+                        <ImageView
+                            android:id="@+id/image3"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="30dp"
+                            android:background="@color/black"
+                            android:src="@drawable/upload" />
+                        <TextView
+                            android:layout_marginTop="10dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:textStyle="bold"
+                            android:textColor="@color/black"
+                            android:textSize="20sp"
+                            android:text="Click to upload Address proof"/>
+                        <TextView
+                            android:layout_marginTop="10dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:textColor="#3A3939"
+                            android:textSize="15sp"
+                            android:layout_marginBottom="5dp"
+                            android:text="PDF,JPG,PNG up to 10MB"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+                <androidx.cardview.widget.CardView
+                    android:layout_gravity="center"
+                    android:layout_width="300dp"
+                    android:layout_height="300dp"
+                    android:layout_margin="32dp"
+                    android:backgroundTint="@android:color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:cardUseCompatPadding="true">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/black"
+                            android:layout_marginTop="2dp"
+                            android:textSize="15sp"
+                            android:padding="8dp"
+                            android:text="Tax Certificate*"/>
+                        <ImageView
+                            android:id="@+id/image4"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center"
+                            android:layout_marginTop="30dp"
+                            android:background="@color/black"
+                            android:src="@drawable/upload" />
+                        <TextView
+                            android:layout_marginTop="10dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:textStyle="bold"
+                            android:textColor="@color/black"
+                            android:textSize="20sp"
+                            android:text="Click to upload Tax Certificate"/>
+                        <TextView
+                            android:layout_marginTop="10dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:textColor="#3A3939"
+                            android:textSize="15sp"
+                            android:layout_marginBottom="5dp"
+                            android:text="PDF,JPG,PNG up to 10MB"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+
+                <LinearLayout
+                    android:layout_weight="2"
+                    android:layout_marginTop="20dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <Button
+                        android:layout_marginStart="20dp"
+                        android:layout_weight="1"
+                        android:padding="10dp"
+                        android:backgroundTint="#C8BDBD"
+                        android:textColor="@color/black"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/previous"
+                        android:text="Previous"
+                        android:layout_marginEnd="5dp"
+                        android:textSize="15sp"
+                        />
+
+                    <Button
+                        android:layout_marginStart="5dp"
+                        android:layout_weight="1"
+                        android:id="@+id/create"
+                        android:layout_marginTop="15dp"
+                        android:layout_gravity="end"
+                        android:layout_marginEnd="20dp"
+                        android:padding="10dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="15sp"
+                        android:text="Create Account"
+                        android:backgroundTint="#1E800D"
+                        /></LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="19sp"
+                        android:fontFamily="sans-serif"
+                        android:text="Already have an account? "/>
+                    <Button
+                        android:id="@+id/signinhere"
+                        android:layout_gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:backgroundTint="@android:color/transparent"
+                        android:textSize="15sp"
+                        android:fontFamily="sans-serif"
+                        android:text="Sign in here"
+                        android:textColor="#045B24"/>
+                </LinearLayout>
+
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+
+    </LinearLayout></ScrollView>
