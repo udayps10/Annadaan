@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import TermsModal from '../../components/TermsModal'
 
 interface DocumentFile {
   file: File
@@ -55,6 +56,8 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [passwordError, setPasswordError] = useState('')
+  const [showTermsModal, setShowTermsModal] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const router = useRouter()
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({})
 
@@ -168,6 +171,18 @@ export default function Register() {
     setCurrentStep(currentStep - 1)
   }
 
+  const handleTermsAccept = () => {
+    setTermsAccepted(true)
+    setShowTermsModal(false)
+    // Proceed with registration
+    submitRegistration()
+  }
+
+  const handleTermsDecline = () => {
+    setShowTermsModal(false)
+    setError('You must accept the terms and conditions to register.')
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
     setFormData({
@@ -229,6 +244,17 @@ export default function Register() {
     e.preventDefault()
     if (!validateStep(3)) return
 
+    // Show terms modal if not already accepted
+    if (!termsAccepted) {
+      setShowTermsModal(true)
+      return
+    }
+
+    // Proceed with actual submission
+    await submitRegistration()
+  }
+
+  const submitRegistration = async () => {
     setLoading(true)
     setError('')
 
@@ -759,6 +785,40 @@ export default function Register() {
             )}
           </div>
         ))}
+        
+        {/* Terms and Conditions Notice */}
+        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <span className="text-2xl">📋</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-blue-900 mb-1">
+                Terms & Conditions Agreement
+              </h3>
+              <p className="text-sm text-blue-700 mb-3">
+                By clicking "Create Account", you agree to review and accept our Terms & Conditions. 
+                You'll be prompted to review them before your registration is complete.
+              </p>
+              <div className="flex items-center space-x-2">
+                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                  termsAccepted 
+                    ? 'bg-green-600 border-green-600 text-white' 
+                    : 'border-gray-300'
+                }`}>
+                  {termsAccepted && (
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
+                <span className="text-sm text-gray-700">
+                  {termsAccepted ? 'Terms accepted ✓' : 'Terms will be reviewed during registration'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -823,6 +883,13 @@ export default function Register() {
             </Link>
           </p>
         </div>
+
+        {/* Terms and Conditions Modal */}
+        <TermsModal
+          isOpen={showTermsModal}
+          onAccept={handleTermsAccept}
+          onDecline={handleTermsDecline}
+        />
       </div>
     </div>
   )
