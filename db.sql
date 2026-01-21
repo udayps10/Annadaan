@@ -184,3 +184,92 @@ CREATE TABLE `verification_profiles` (
   CONSTRAINT `verification_profiles_ibfk_2` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `individual_donors`;
+CREATE TABLE `individual_donors` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `full_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `aadhaar_number` varchar(12) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `registration_date` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `aadhaar_number` (`aadhaar_number`),
+  KEY `phone` (`phone`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `upi_donations`;
+CREATE TABLE `upi_donations` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `donor_id` int NOT NULL,
+  `amount` decimal(10,2) DEFAULT NULL,
+  `payment_screenshot` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `screenshot_filename` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `transaction_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `admin_notes` text COLLATE utf8mb4_unicode_ci,
+  `reviewed_by` int DEFAULT NULL,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `receipt_sent` tinyint(1) DEFAULT '0',
+  `receipt_sent_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `donor_id` (`donor_id`),
+  KEY `status` (`status`),
+  KEY `reviewed_by` (`reviewed_by`),
+  CONSTRAINT `upi_donations_ibfk_1` FOREIGN KEY (`donor_id`) REFERENCES `individual_donors` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `upi_donations_ibfk_2` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `item_donations`;
+CREATE TABLE `item_donations` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `donor_id` int NOT NULL,
+  `transaction_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `item_title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `quantity` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `pickup_datetime` datetime NOT NULL,
+  `pickup_address` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `pickup_location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `status` enum('pending','approved','rejected','collected') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `approval_photo` longtext COLLATE utf8mb4_unicode_ci,
+  `approval_photo_filename` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `admin_notes` text COLLATE utf8mb4_unicode_ci,
+  `reviewed_by` int DEFAULT NULL,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `collected_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `donor_id` (`donor_id`),
+  KEY `status` (`status`),
+  KEY `reviewed_by` (`reviewed_by`),
+  CONSTRAINT `item_donations_ibfk_1` FOREIGN KEY (`donor_id`) REFERENCES `individual_donors` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `item_donations_ibfk_2` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `donation_logs`;
+CREATE TABLE `donation_logs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `donor_id` int NOT NULL,
+  `donation_type` enum('upi','item') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `donation_id` int NOT NULL,
+  `action` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `action_by` int DEFAULT NULL,
+  `action_details` text COLLATE utf8mb4_unicode_ci,
+  `status_from` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status_to` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `donor_id` (`donor_id`),
+  KEY `action_by` (`action_by`),
+  KEY `donation_type_id` (`donation_type`, `donation_id`),
+  CONSTRAINT `donation_logs_ibfk_1` FOREIGN KEY (`donor_id`) REFERENCES `individual_donors` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `donation_logs_ibfk_2` FOREIGN KEY (`action_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

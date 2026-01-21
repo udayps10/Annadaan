@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   title: 'Annadaan - Where every extra plate finds a purpose',
   description: 'Connect food providers with NGOs and shelters to share available food and strengthen communities.',
   keywords: 'food rescue, food donation, available food, NGO, food sharing, hunger relief',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 }
 
 export default function RootLayout({

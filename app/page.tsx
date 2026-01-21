@@ -50,9 +50,7 @@ export default function HomePage() {
               whileHover={{ scale: 1.05 }}
             >
               <div className="flex-shrink-0">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                  🍽️ Annadaan
-                </h1>
+                <img src="/logo.png" alt="Annadaan" className="h-10" />
               </div>
             </motion.div>
             <div className="hidden md:block">
@@ -668,9 +666,7 @@ export default function HomePage() {
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.3 }}
             >
-              <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                🍽️ Annadaan
-              </h3>
+              <img src="/logo.png" alt="Annadaan" className="h-12 mb-4" />
               <p className="text-gray-400 leading-relaxed max-w-md">
                 Sharing good food and strengthening communities through technology and collaboration. 
                 Every meal saved is a step towards a more sustainable and caring world.

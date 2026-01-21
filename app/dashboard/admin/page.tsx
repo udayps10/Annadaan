@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAlert } from '../../../hooks/useAlert'
 import { AlertModal } from '../../../components/AlertModal'
 
+type TabId = 'overview' | 'verifications' | 'upi-donations' | 'item-donations' | 'activities' | 'deliveries' | 'gallery' | 'users' | 'listings'
+
 export default function AdminDashboard() {
   const { alertState, showSuccess, showError, hideAlert } = useAlert()
   const [user, setUser] = useState<any>(null)
@@ -16,7 +18,14 @@ export default function AdminDashboard() {
   const [rescueStats, setRescueStats] = useState<any>({})
   const [recentUsers, setRecentUsers] = useState<any[]>([])
   const [pendingVerifications, setPendingVerifications] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState('overview')
+  const [upiDonations, setUpiDonations] = useState<any[]>([])
+  const [itemDonations, setItemDonations] = useState<any[]>([])
+  const [donationLogs, setDonationLogs] = useState<any[]>([])
+  const [showCollectionModal, setShowCollectionModal] = useState(false)
+  const [selectedDonation, setSelectedDonation] = useState<any>(null)
+  const [collectionPhoto, setCollectionPhoto] = useState<string>('')
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
+  const [activeTab, setActiveTab] = useState<TabId>('overview')
   const [loading, setLoading] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [autoRefresh, setAutoRefresh] = useState(true)
@@ -39,6 +48,7 @@ export default function AdminDashboard() {
     fetchActivities()
     fetchGalleryPhotos()
     fetchPendingVerifications()
+    fetchDonations()
     
     // Set up auto-refresh
     if (autoRefresh) {
@@ -47,6 +57,7 @@ export default function AdminDashboard() {
         fetchData()
         fetchGalleryPhotos()
         fetchPendingVerifications()
+        fetchDonations()
       }, 30000) // Refresh every 30 seconds
       setRefreshInterval(interval)
     }
@@ -156,6 +167,53 @@ export default function AdminDashboard() {
     }
   }, [])
 
+  const fetchDonations = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/donations')
+      if (response.ok) {
+        const data = await response.json()
+        setUpiDonations(data.upiDonations || [])
+        setItemDonations(data.itemDonations || [])
+      }
+      
+      // Fetch donation logs
+      const logsResponse = await fetch('/api/admin/donations/logs')
+      if (logsResponse.ok) {
+        const logsData = await logsResponse.json()
+        setDonationLogs(logsData.logs || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch donations:', error)
+    }
+  }, [])
+
+  const handleDonationAction = async (type: 'upi' | 'item', id: number, action: string, photoData?: string) => {
+    try {
+      const endpoint = `/api/admin/donations/${type}/${id}/${action}`
+      const body: any = { adminId: user?.id }
+      
+      if (type === 'item' && photoData) {
+        body.approvalPhoto = photoData
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+
+      if (response.ok) {
+        showSuccess(`Donation ${action}d successfully!`)
+        fetchDonations()
+      } else {
+        showError('Failed to process action')
+      }
+    } catch (error) {
+      console.error('Donation action error:', error)
+      showError('Failed to process action')
+    }
+  }
+
   const handleGalleryAction = async (photoId: number, action: string) => {
     try {
       const token = localStorage.getItem('token')
@@ -217,6 +275,7 @@ export default function AdminDashboard() {
     fetchActivities()
     fetchGalleryPhotos()
     fetchPendingVerifications()
+    fetchDonations()
   }
 
   const toggleAutoRefresh = () => {
@@ -303,6 +362,13 @@ export default function AdminDashboard() {
                 Last updated: {lastUpdate.toLocaleTimeString()}
               </div>
               <button
+                onClick={() => window.open('/api/admin/donations/preview-receipt', '_blank')}
+                className="px-3 py-1 rounded-md text-sm font-medium bg-purple-100 text-purple-800 hover:bg-purple-200"
+                title="Preview sample PDF receipt"
+              >
+                📄 Preview Receipt
+              </button>
+              <button
                 onClick={toggleAutoRefresh}
                 className={`px-3 py-1 rounded-md text-sm font-medium ${
                   autoRefresh 
@@ -339,6 +405,8 @@ export default function AdminDashboard() {
               {[
                 { id: 'overview', name: 'Overview', icon: '📊', count: null },
                 { id: 'verifications', name: 'Verifications', icon: '✅', count: pendingVerifications.length },
+                { id: 'upi-donations', name: 'UPI Donations', icon: '💰', count: upiDonations.filter(d => d.status === 'pending').length },
+                { id: 'item-donations', name: 'Item Donations', icon: '🍱', count: itemDonations.filter(d => d.status === 'pending' || d.status === 'approved').length },
                 { id: 'activities', name: 'Activities', icon: '📝', count: activities.length },
                 { id: 'deliveries', name: 'Deliveries', icon: '🚚', count: deliveries.length },
                 { id: 'gallery', name: 'Gallery', icon: '📸', count: galleryPhotos.filter(p => !p.isApproved).length },
@@ -347,7 +415,7 @@ export default function AdminDashboard() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => setActiveTab(tab.id as TabId)}
                   className={`${
                     activeTab === tab.id
                       ? 'border-primary-500 text-primary-600'
@@ -961,6 +1029,350 @@ export default function AdminDashboard() {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* UPI Donations Tab */}
+        {activeTab === 'upi-donations' && (
+          <div className="space-y-6">
+            {/* Pending UPI Donations */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">💰 Pending UPI Donations</h2>
+              <div className="space-y-4">
+                {upiDonations.filter(d => d.status === 'pending').length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">✅</div>
+                    <p className="text-gray-600">No pending UPI donations</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {upiDonations.filter(d => d.status === 'pending').map((donation) => (
+                      <div key={donation.id} className="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-900 mb-2">Donation #{donation.id}</h4>
+                        <div className="text-sm text-gray-600 space-y-1 mb-3">
+                          <div>💰 Amount: ₹{donation.amount}</div>
+                          <div>👤 {donation.full_name}</div>
+                          <div>📧 {donation.email}</div>
+                          <div>📱 {donation.phone}</div>
+                          <div>📅 {new Date(donation.created_at).toLocaleString()}</div>
+                        </div>
+                        <img src={donation.payment_screenshot} alt="Payment" className="w-full h-48 object-contain border rounded mb-3" />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleDonationAction('upi', donation.id, 'approve')}
+                            className="flex-1 bg-green-600 text-white py-2 rounded text-sm hover:bg-green-700"
+                          >
+                            ✅ Approve
+                          </button>
+                          <button
+                            onClick={() => handleDonationAction('upi', donation.id, 'reject')}
+                            className="flex-1 bg-red-600 text-white py-2 rounded text-sm hover:bg-red-700"
+                          >
+                            ❌ Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Approved UPI Donations */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">✅ Approved UPI Donations</h2>
+              <div className="space-y-3">
+                {upiDonations.filter(d => d.status === 'approved').length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-2">💰</div>
+                    <p className="text-gray-600">No approved UPI donations yet</p>
+                  </div>
+                ) : (
+                  upiDonations.filter(d => d.status === 'approved').slice(0, 10).map((donation) => (
+                    <div key={donation.id} className="border border-green-200 bg-green-50 rounded-lg p-4 flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900">₹{donation.amount} - {donation.full_name}</h4>
+                        <div className="text-sm text-gray-600 mt-1">
+                          <div>📧 {donation.email} • 📱 {donation.phone}</div>
+                          <div>✅ Approved: {new Date(donation.reviewed_at || '').toLocaleString()}</div>
+                          <div className={donation.receipt_sent ? 'text-green-600' : 'text-orange-600'}>
+                            {donation.receipt_sent ? '📄 Receipt Sent' : '⚠️ Receipt Not Sent'}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => window.open(`/api/admin/donations/generate-receipt/${donation.id}?type=upi`, '_blank')}
+                        className="ml-4 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                      >
+                        📄 Download Receipt
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Item Donations Tab */}
+        {activeTab === 'item-donations' && (
+          <div className="space-y-6">
+            {/* Pending Approvals */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">📋 Pending Approvals</h2>
+              <div className="space-y-4">
+                {itemDonations.filter(d => d.status === 'pending').length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-2">✅</div>
+                    <p className="text-gray-600">No pending approvals</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {itemDonations.filter(d => d.status === 'pending').map((donation) => (
+                      <div key={donation.id} className="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-900 mb-2">{donation.item_title}</h4>
+                        <div className="text-sm text-gray-600 space-y-1 mb-3">
+                          <div>📦 Quantity: {donation.quantity}</div>
+                          <div>👤 {donation.full_name}</div>
+                          <div>📱 {donation.phone}</div>
+                          <div>📧 {donation.email}</div>
+                          <div>📅 Pickup: {new Date(donation.pickup_datetime).toLocaleString()}</div>
+                          <div>📍 {donation.pickup_address}</div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleDonationAction('item', donation.id, 'approve')}
+                            className="flex-1 bg-green-600 text-white py-2 rounded text-sm hover:bg-green-700"
+                          >
+                            ✅ Approve & Notify
+                          </button>
+                          <button
+                            onClick={() => handleDonationAction('item', donation.id, 'reject')}
+                            className="flex-1 bg-red-600 text-white py-2 rounded text-sm hover:bg-red-700"
+                          >
+                            ❌ Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Approved - Awaiting Collection */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">🚚 Approved - Awaiting Collection</h2>
+              <div className="space-y-4">
+                {itemDonations.filter(d => d.status === 'approved').length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-2">📦</div>
+                    <p className="text-gray-600">No items awaiting collection</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {itemDonations.filter(d => d.status === 'approved').map((donation) => (
+                      <div key={donation.id} className="border border-green-200 bg-green-50 rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{donation.item_title}</h4>
+                          <span className="px-2 py-1 bg-green-600 text-white text-xs rounded">APPROVED</span>
+                        </div>
+                        <div className="text-sm text-gray-600 space-y-1 mb-3">
+                          <div>📦 Quantity: {donation.quantity}</div>
+                          <div>👤 {donation.full_name}</div>
+                          <div>📱 {donation.phone}</div>
+                          <div>📅 Collection: {new Date(donation.pickup_datetime).toLocaleString()}</div>
+                          <div>📍 {donation.pickup_address}</div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedDonation(donation)
+                            setShowCollectionModal(true)
+                          }}
+                          className="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 font-semibold"
+                        >
+                          📸 Upload Photo & Mark Collected
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Collected Items */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">✅ Recently Collected</h2>
+              <div className="space-y-3">
+                {itemDonations.filter(d => d.status === 'collected').slice(0, 10).map((donation) => (
+                  <div key={donation.id} className="border border-gray-200 rounded-lg p-4 flex items-start gap-4">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900">{donation.item_title}</h4>
+                      <div className="text-sm text-gray-600 mt-1">
+                        <div>📦 {donation.quantity} • 👤 {donation.full_name}</div>
+                        <div>✅ Collected: {new Date(donation.collected_at || '').toLocaleString()}</div>
+                      </div>
+                      <button
+                        onClick={() => window.open(`/api/admin/donations/generate-receipt/${donation.id}`, '_blank')}
+                        className="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                      >
+                        📄 Download Receipt
+                      </button>
+                    </div>
+                    {donation.approval_photo && (
+                      <img 
+                        src={donation.approval_photo} 
+                        alt="Collection photo" 
+                        className="w-20 h-20 object-cover rounded border"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Donation Logs */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">📜 Donation Activity Logs</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-semibold">Time</th>
+                      <th className="px-4 py-3 text-left font-semibold">Type</th>
+                      <th className="px-4 py-3 text-left font-semibold">Donor</th>
+                      <th className="px-4 py-3 text-left font-semibold">Action</th>
+                      <th className="px-4 py-3 text-left font-semibold">By</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {donationLogs.slice(0, 50).map((log) => (
+                      <tr key={log.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-gray-600">
+                          {new Date(log.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            log.donation_type === 'upi' 
+                              ? 'bg-purple-100 text-purple-700' 
+                              : 'bg-orange-100 text-orange-700'
+                          }`}>
+                            {log.type_label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-900">{log.donor_name}</td>
+                        <td className="px-4 py-3">
+                          <span className={`font-semibold ${
+                            log.action === 'approve' ? 'text-green-600' :
+                            log.action === 'reject' ? 'text-red-600' :
+                            log.action === 'collected' ? 'text-blue-600' :
+                            'text-gray-600'
+                          }`}>
+                            {log.action.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {log.admin_name || log.donor_name}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Collection Photo Modal */}
+        {showCollectionModal && selectedDonation && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-lg w-full p-6">
+              <h3 className="text-2xl font-bold mb-4">📸 Collection Confirmation</h3>
+              
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-semibold mb-2">{selectedDonation.item_title}</h4>
+                <div className="text-sm text-gray-600">
+                  <div>👤 {selectedDonation.full_name}</div>
+                  <div>📦 {selectedDonation.quantity}</div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2">Upload Collection Photo</label>
+                {!collectionPhoto ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setIsUploadingPhoto(true)
+                          const reader = new FileReader()
+                          reader.onloadend = () => {
+                            setCollectionPhoto(reader.result as string)
+                            setIsUploadingPhoto(false)
+                          }
+                          reader.readAsDataURL(file)
+                        }
+                      }}
+                      className="hidden"
+                      id="collection-photo"
+                    />
+                    <label htmlFor="collection-photo" className="cursor-pointer">
+                      {isUploadingPhoto ? (
+                        <div>Loading...</div>
+                      ) : (
+                        <>
+                          <div className="text-4xl mb-2">📷</div>
+                          <p className="text-gray-600">Tap to capture photo</p>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <img src={collectionPhoto} alt="Collection" className="w-full rounded-lg" />
+                    <button
+                      onClick={() => setCollectionPhoto('')}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowCollectionModal(false)
+                    setSelectedDonation(null)
+                    setCollectionPhoto('')
+                  }}
+                  className="flex-1 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!collectionPhoto) {
+                      showError('Please upload a photo')
+                      return
+                    }
+                    await handleDonationAction('item', selectedDonation.id, 'collected', collectionPhoto)
+                    setShowCollectionModal(false)
+                    setSelectedDonation(null)
+                    setCollectionPhoto('')
+                  }}
+                  disabled={!collectionPhoto}
+                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                >
+                  ✅ Confirm Collection
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

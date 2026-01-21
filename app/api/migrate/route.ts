@@ -35,6 +35,47 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Add transaction_id column to item_donations table
+    try {
+      await executeQuery(`
+        ALTER TABLE item_donations 
+        ADD COLUMN transaction_id VARCHAR(255) NULL AFTER donor_id
+      `);
+      migrations.push('item_donations.transaction_id column added');
+    } catch (error: any) {
+      if (error.code === 'ER_DUP_FIELDNAME') {
+        migrations.push('item_donations.transaction_id already exists');
+      } else if (error.code === 'ER_NO_SUCH_TABLE') {
+        migrations.push('item_donations table does not exist yet - will be created correctly');
+      } else {
+        migrations.push('item_donations.transaction_id add failed: ' + error.message);
+      }
+    }
+
+    // Generate transaction IDs for existing item donations without one
+    try {
+      const result = await executeQuery(`
+        UPDATE item_donations 
+        SET transaction_id = CONCAT('ITEM-', DATE_FORMAT(created_at, '%Y%m%d-%H%i%s'), '-', UPPER(SUBSTRING(MD5(RAND()), 1, 6)))
+        WHERE transaction_id IS NULL
+      `);
+      migrations.push(`Generated transaction IDs for ${(result as any).affectedRows} existing item donations`);
+    } catch (error: any) {
+      migrations.push('item_donations transaction ID generation skipped: ' + error.message);
+    }
+
+    // Generate transaction IDs for existing UPI donations without one
+    try {
+      const result = await executeQuery(`
+        UPDATE upi_donations 
+        SET transaction_id = CONCAT('UPI-', DATE_FORMAT(created_at, '%Y%m%d-%H%i%s'), '-', UPPER(SUBSTRING(MD5(RAND()), 1, 6)))
+        WHERE transaction_id IS NULL
+      `);
+      migrations.push(`Generated transaction IDs for ${(result as any).affectedRows} existing UPI donations`);
+    } catch (error: any) {
+      migrations.push('upi_donations transaction ID generation skipped: ' + error.message);
+    }
+
     return NextResponse.json({ 
       message: 'Database migration completed',
       migrations: migrations

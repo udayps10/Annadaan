@@ -6,9 +6,10 @@ export const dbConfig = {
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'foodrescue',
   port: parseInt(process.env.DB_PORT || '3306'),
-  // Connection pool settings
-  connectionLimit: 10,
+  // Connection pool settings - increased for better concurrency
+  connectionLimit: 50,
   queueLimit: 0,
+  waitForConnections: true,
   // Keep alive settings to prevent connection timeout
   keepAliveInitialDelay: 0,
   enableKeepAlive: true,
@@ -185,8 +186,10 @@ export async function executeQuery(query: string, params: any[] = [], retries: n
       if (error.code === 'PROTOCOL_CONNECTION_LOST' || 
           error.code === 'ECONNRESET' || 
           error.code === 'PROTOCOL_ENQUEUE_AFTER_QUIT' ||
-          error.message.includes('connection is in closed state')) {
-        // Connection lost, resetting pool
+          error.code === 'ER_CON_COUNT_ERROR' ||
+          error.message.includes('connection is in closed state') ||
+          error.message.includes('Too many connections')) {
+        // Connection lost or pool exhausted, resetting pool
         pool = null;
         
         // Wait a bit before retrying (exponential backoff)
@@ -203,6 +206,9 @@ export async function executeQuery(query: string, params: any[] = [], retries: n
   // If all retries failed, throw the last error
   throw lastError;
 }
+
+// Export query as an alias for backward compatibility
+export const query = executeQuery;
 
 // Helper function to gracefully close the pool
 export async function closePool() {
