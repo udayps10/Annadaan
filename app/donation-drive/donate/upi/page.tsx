@@ -446,7 +446,7 @@ export default function UPIDonationPage() {
                           </p>
                         )}
                         <p className="text-xs text-gray-500 mt-2 font-mono">
-                          singhraunak1107@oksbi
+                          raunaksingh11@sbi
                         </p>
                       </div>
                     </div>

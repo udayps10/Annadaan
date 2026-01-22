@@ -3,7 +3,7 @@ import QRCode from 'qrcode'
 
 // Fixed UPI configuration
 const UPI_CONFIG = {
-  upiId: 'singhraunak1107@oksbi',
+  upiId: 'raunaksingh11@sbi',
   payeeName: 'Donation Drive',
   currency: 'INR'
 }
