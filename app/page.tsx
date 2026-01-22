@@ -359,9 +359,10 @@ export default function HomePage() {
                 transition={{ delay: 1 }}
               >
                 {[
-                  { icon: '🍽️', text: '1M+ Meals Rescued' },
-                  { icon: '🌍', text: '500+ Partners' },
-                  { icon: '📍', text: '50+ Cities' }
+                  { icon: '🍽️', text: 'Food Rescue Mission' },
+{ icon: '🌍', text: 'Partner Network in Progress' },
+{ icon: '📍', text: 'Pilot Cities Identified' }
+
                 ].map((stat, index) => (
                   <motion.div 
                     key={index}
