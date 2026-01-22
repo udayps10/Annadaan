@@ -29,10 +29,19 @@ export default function LoginPage() {
         }),
       })
 
-      const data = await response.json()
+      const response_data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed')
+        throw new Error(response_data.message || 'Login failed')
+      }
+
+      // Extract data from standardized API response format
+      // API returns: { success: true, data: { token, user, requiresVerification }, message: '...' }
+      const data = response_data.success ? response_data.data : response_data
+
+      // Validate response structure
+      if (!data.user || !data.user.role) {
+        throw new Error('Invalid response from server')
       }
 
       // Check if user requires verification

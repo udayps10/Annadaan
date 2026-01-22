@@ -1,19 +1,66 @@
+/**
+ * Authentication Login Endpoint
+ * Handles user login with email and password
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/database';
 import { verifyPassword, generateToken } from '@/lib/auth';
+import { 
+  handleError, 
+  handleSuccess, 
+  ValidationError, 
+  AuthenticationError,
+  AuthorizationError,
+  logInfo 
+} from '@/lib/errors';
+import { 
+  validateEmail, 
+  validateRequired, 
+  validateFields,
+  sanitizeEmail 
+} from '@/lib/validation';
+import { HTTP_STATUS } from '@/lib/config';
+import { generateToken as generateJWT, UserRole } from '@/lib/middleware';
+
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+interface UserRecord {
+  id: number;
+  email: string;
+  password: string;
+  full_name: string;
+  role: UserRole;
+  status: 'pending' | 'approved' | 'rejected' | 'suspended';
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    // Parse and validate request body
+    const body: LoginRequest = await request.json();
+    
+    // Validate inputs
+    validateFields([
+      { result: validateRequired(body.email, 'Email'), field: 'email' },
+      { result: validateRequired(body.password, 'Password'), field: 'password' },
+      { result: validateEmail(body.email || ''), field: 'email' },
+    ]);
 
-    // Find user (matching the database schema)
-    const users = await executeQuery(
+    // Sanitize email
+    const email = sanitizeEmail(body.email);
+    const password = body.password;
+
+    // Find user by email
+    const users = await executeQuery<UserRecord[]>(
       'SELECT id, email, password, full_name, role, status FROM users WHERE email = ?',
       [email]
-    ) as any[];
+    );
 
     if (users.length === 0) {
-      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
+      throw new AuthenticationError('Invalid email or password');
     }
 
     const user = users[0];
@@ -21,40 +68,34 @@ export async function POST(request: NextRequest) {
     // Verify password
     const isValidPassword = await verifyPassword(password, user.password);
     if (!isValidPassword) {
-      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
+      throw new AuthenticationError('Invalid email or password');
     }
 
-    // Generate token (using role)
-    const token = generateToken(user.id, user.role);
-
-    // Check user status and return appropriate response
-    if (user.status === 'pending') {
-      return NextResponse.json({
-        message: 'Account pending verification',
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.full_name,
-          full_name: user.full_name,
-          role: user.role,
-          status: user.status
-        },
-        requiresVerification: true
-      });
-    } else if (user.status === 'rejected') {
-      return NextResponse.json({ 
-        message: 'Account has been rejected. Please contact support.' 
-      }, { status: 403 });
-    } else if (user.status === 'suspended') {
-      return NextResponse.json({ 
-        message: 'Account has been suspended. Please contact support.' 
-      }, { status: 403 });
+    // Check account status
+    if (user.status === 'rejected') {
+      throw new AuthorizationError('Account has been rejected. Please contact support.');
     }
 
-    // User is approved, normal login
-    return NextResponse.json({
-      message: 'Login successful',
+    if (user.status === 'suspended') {
+      throw new AuthorizationError('Account has been suspended. Please contact support.');
+    }
+
+    // Generate JWT token
+    const token = generateJWT({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    // Log successful login
+    logInfo('User logged in successfully', {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    // Prepare response data
+    const responseData = {
       token,
       user: {
         id: user.id,
@@ -62,13 +103,21 @@ export async function POST(request: NextRequest) {
         name: user.full_name,
         full_name: user.full_name,
         role: user.role,
-        status: user.status
+        status: user.status,
       },
-      requiresVerification: false
-    });
+      requiresVerification: user.status === 'pending',
+    };
+
+    // Return success response
+    return handleSuccess(
+      responseData,
+      user.status === 'pending' 
+        ? 'Account pending verification' 
+        : 'Login successful',
+      HTTP_STATUS.OK
+    );
 
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ message: 'Login failed' }, { status: 500 });
+    return handleError(error as Error);
   }
 }

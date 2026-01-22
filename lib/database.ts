@@ -1,47 +1,47 @@
-import mysql from 'mysql2/promise';
+/**
+ * Database Connection and Query Management
+ * Provides connection pooling, transaction support, and error handling
+ */
 
-export const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'foodrescue',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  // Connection pool settings - increased for better concurrency
-  connectionLimit: 50,
-  queueLimit: 0,
-  waitForConnections: true,
-  // Keep alive settings to prevent connection timeout
-  keepAliveInitialDelay: 0,
-  enableKeepAlive: true,
-  // Remove deprecated timeout settings
-  charset: 'utf8mb4',
-  timezone: 'Z'
-};
+import mysql from 'mysql2/promise';
+import { DATABASE_CONFIG } from './config';
+import { DatabaseError, parseDatabaseError } from './errors';
+import { logError, logInfo, logDebug } from './logger';
+
+// Use centralized configuration
+export const dbConfig = DATABASE_CONFIG;
 
 let pool: mysql.Pool | null = null;
 
-export async function getDbConnection() {
+/**
+ * Get or create database connection pool
+ */
+export async function getDbConnection(): Promise<mysql.Pool> {
   if (!pool) {
     try {
       pool = mysql.createPool(dbConfig);
-      // Database connection pool created successfully
+      logInfo('Database connection pool created', { 
+        connectionLimit: dbConfig.connectionLimit 
+      });
     } catch (error) {
-      console.error('Database pool creation failed:', error);
-      throw error;
+      logError('Failed to create database connection pool', { error });
+      throw new DatabaseError('Failed to create database connection pool');
     }
   }
   return pool;
 }
 
-// Function to test and ensure connection is alive
-export async function ensureConnection() {
+/**
+ * Test and ensure connection is alive
+ */
+export async function ensureConnection(): Promise<mysql.Pool> {
   try {
-    const pool = await getDbConnection();
+    const currentPool = await getDbConnection();
     // Test the connection with a simple query
-    await pool.execute('SELECT 1');
-    return pool;
+    await currentPool.execute('SELECT 1');
+    return currentPool;
   } catch (error) {
-    console.error('Connection test failed, recreating pool:', error);
+    logError('Connection test failed, recreating pool', { error });
     // Reset the pool and try again
     pool = null;
     return await getDbConnection();
@@ -170,62 +170,122 @@ export async function initializeDatabase() {
   `);
 }
 
-export async function executeQuery(query: string, params: any[] = [], retries: number = 3) {
-  let lastError;
+/**
+ * Execute query with retry logic and error handling
+ */
+export async function executeQuery<T = any>(
+  query: string, 
+  params: any[] = [], 
+  retries: number = 3
+): Promise<T> {
+  let lastError: any;
   
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const pool = await ensureConnection();
-      const [results] = await pool.execute(query, params);
-      return results;
+      const currentPool = await ensureConnection();
+      const [results] = await currentPool.execute(query, params);
+      
+      logDebug('Query executed successfully', { 
+        attempt, 
+        query: query.substring(0, 100) 
+      });
+      
+      return results as T;
     } catch (error: any) {
       lastError = error;
-      console.error(`Database query attempt ${attempt} failed:`, error.message);
+      
+      logError(error, { 
+        context: `Database query attempt ${attempt} failed`,
+        query: query.substring(0, 100),
+      });
       
       // Check if it's a connection-related error
-      if (error.code === 'PROTOCOL_CONNECTION_LOST' || 
-          error.code === 'ECONNRESET' || 
-          error.code === 'PROTOCOL_ENQUEUE_AFTER_QUIT' ||
-          error.code === 'ER_CON_COUNT_ERROR' ||
-          error.message.includes('connection is in closed state') ||
-          error.message.includes('Too many connections')) {
-        // Connection lost or pool exhausted, resetting pool
+      const isConnectionError = 
+        error.code === 'PROTOCOL_CONNECTION_LOST' || 
+        error.code === 'ECONNRESET' || 
+        error.code === 'PROTOCOL_ENQUEUE_AFTER_QUIT' ||
+        error.code === 'ER_CON_COUNT_ERROR' ||
+        error.message?.includes('connection is in closed state') ||
+        error.message?.includes('Too many connections');
+      
+      if (isConnectionError) {
+        // Reset pool for connection errors
         pool = null;
         
-        // Wait a bit before retrying (exponential backoff)
+        // Wait before retrying (exponential backoff)
         if (attempt < retries) {
-          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+          const waitTime = attempt * 1000;
+          await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       } else {
-        // If it's not a connection error, don't retry
-        throw error;
+        // Non-connection errors shouldn't be retried
+        throw parseDatabaseError(error);
       }
     }
   }
   
-  // If all retries failed, throw the last error
-  throw lastError;
+  // All retries failed
+  throw parseDatabaseError(lastError);
 }
 
 // Export query as an alias for backward compatibility
 export const query = executeQuery;
 
-// Helper function to gracefully close the pool
-export async function closePool() {
-  if (pool) {
-    await pool.end();
-    pool = null;
-    // Database connection pool closed
+/**
+ * Begin transaction
+ */
+export async function beginTransaction(): Promise<mysql.PoolConnection> {
+  const currentPool = await ensureConnection();
+  const connection = await currentPool.getConnection();
+  await connection.beginTransaction();
+  return connection;
+}
+
+/**
+ * Execute query within a transaction
+ */
+export async function executeInTransaction<T>(
+  callback: (connection: mysql.PoolConnection) => Promise<T>
+): Promise<T> {
+  const connection = await beginTransaction();
+  
+  try {
+    const result = await callback(connection);
+    await connection.commit();
+    logDebug('Transaction committed successfully');
+    return result;
+  } catch (error) {
+    await connection.rollback();
+    logError('Transaction rolled back', { error });
+    throw parseDatabaseError(error);
+  } finally {
+    connection.release();
   }
 }
 
-// Health check function
-export async function healthCheck() {
+/**
+ * Helper function to gracefully close the pool
+ */
+export async function closePool(): Promise<void> {
+  if (pool) {
+    await pool.end();
+    pool = null;
+    logInfo('Database connection pool closed');
+  }
+}
+
+/**
+ * Health check function
+ */
+export async function healthCheck(): Promise<{ healthy: boolean; timestamp: string; error?: string }> {
   try {
-    const result = await executeQuery('SELECT 1 as health_check');
-    return { healthy: true, timestamp: new Date().toISOString() };
+    await executeQuery('SELECT 1 as health_check');
+    return { 
+      healthy: true, 
+      timestamp: new Date().toISOString() 
+    };
   } catch (error) {
-    console.error('Database health check failed:', error);
+    logError('Database health check failed', { error });
     return { 
       healthy: false, 
       error: error instanceof Error ? error.message : 'Unknown error',

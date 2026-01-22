@@ -1,92 +1,109 @@
-import { NextResponse } from 'next/server'
-import { query } from '@/lib/database'
+/**
+ * Donor Registration Endpoint
+ * Handles individual donor registration for donation drive
+ */
 
-export async function POST(request: Request) {
+import { NextRequest } from 'next/server'
+import { executeQuery } from '@/lib/database'
+import { 
+  handleError, 
+  handleSuccess, 
+  ConflictError,
+  ValidationError,
+  logInfo 
+} from '@/lib/errors'
+import { 
+  validateFields, 
+  validateRequired, 
+  validateEmail, 
+  validatePhone,
+  validateName,
+  sanitizeEmail,
+  sanitizePhone,
+  sanitizeString 
+} from '@/lib/validation'
+import { HTTP_STATUS } from '@/lib/config'
+
+interface DonorRegistration {
+  fullName: string
+  phone: string
+  email: string
+  aadhaarNumber: string
+}
+
+interface ExistingDonor {
+  id: number
+}
+
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { fullName, phone, email, aadhaarNumber } = body
+    const body: DonorRegistration = await request.json()
 
-    // Validation
-    if (!fullName || !phone || !email || !aadhaarNumber) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      )
+    // Validate all required fields
+    validateFields([
+      { result: validateRequired(body.fullName, 'Full name'), field: 'fullName' },
+      { result: validateRequired(body.phone, 'Phone'), field: 'phone' },
+      { result: validateRequired(body.email, 'Email'), field: 'email' },
+      { result: validateRequired(body.aadhaarNumber, 'Aadhaar number'), field: 'aadhaarNumber' },
+      { result: validateName(body.fullName, 'Full name'), field: 'fullName' },
+      { result: validatePhone(body.phone), field: 'phone' },
+      { result: validateEmail(body.email), field: 'email' },
+    ])
+
+    // Validate Aadhaar format (12 digits)
+    if (!/^\d{12}$/.test(body.aadhaarNumber)) {
+      throw new ValidationError('Aadhaar number must be exactly 12 digits')
     }
 
-    // Validate phone format
-    if (!/^[6-9]\d{9}$/.test(phone)) {
-      return NextResponse.json(
-        { error: 'Invalid phone number format' },
-        { status: 400 }
-      )
-    }
-
-    // Validate email format
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      )
-    }
-
-    // Validate Aadhaar format
-    if (!/^\d{12}$/.test(aadhaarNumber)) {
-      return NextResponse.json(
-        { error: 'Aadhaar number must be 12 digits' },
-        { status: 400 }
-      )
-    }
+    // Sanitize inputs
+    const fullName = sanitizeString(body.fullName)
+    const phone = sanitizePhone(body.phone)
+    const email = sanitizeEmail(body.email)
+    const aadhaarNumber = body.aadhaarNumber.trim()
 
     // Check if email already exists
-    const existingEmail = await query(
+    const existingEmail = await executeQuery<ExistingDonor[]>(
       'SELECT id FROM individual_donors WHERE email = ?',
       [email]
-    ) as any[]
+    )
 
     if (existingEmail.length > 0) {
-      return NextResponse.json(
-        { 
-          error: 'This email is already registered',
-          donorId: existingEmail[0].id 
-        },
-        { status: 409 }
-      )
+      throw new ConflictError('This email is already registered', {
+        donorId: existingEmail[0].id
+      })
     }
 
     // Check if Aadhaar already exists
-    const existingAadhaar = await query(
+    const existingAadhaar = await executeQuery<ExistingDonor[]>(
       'SELECT id FROM individual_donors WHERE aadhaar_number = ?',
       [aadhaarNumber]
-    ) as any[]
+    )
 
     if (existingAadhaar.length > 0) {
-      return NextResponse.json(
-        { 
-          error: 'This Aadhaar number is already registered',
-          donorId: existingAadhaar[0].id 
-        },
-        { status: 409 }
-      )
+      throw new ConflictError('This Aadhaar number is already registered', {
+        donorId: existingAadhaar[0].id
+      })
     }
 
     // Insert new donor
-    const result = await query(
+    const result = await executeQuery<any>(
       `INSERT INTO individual_donors (full_name, phone, email, aadhaar_number, registration_date) 
        VALUES (?, ?, ?, ?, NOW())`,
       [fullName, phone, email, aadhaarNumber]
-    ) as any
+    )
 
-    return NextResponse.json({
-      message: 'Registration successful',
-      donorId: result.insertId
-    })
+    const donorId = result.insertId
+
+    logInfo('New donor registered', { donorId, email })
+
+    return handleSuccess({
+      donorId,
+      fullName,
+      email,
+      phone
+    }, 'Registration successful. You can now make donations!', HTTP_STATUS.CREATED)
 
   } catch (error) {
-    console.error('Registration error:', error)
-    return NextResponse.json(
-      { error: 'Failed to register donor. Please try again.' },
-      { status: 500 }
-    )
+    return handleError(error as Error)
   }
 }

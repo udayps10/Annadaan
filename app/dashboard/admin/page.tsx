@@ -32,6 +32,9 @@ export default function AdminDashboard() {
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null)
   const [newDataAvailable, setNewDataAvailable] = useState(false)
   const [lastActivityCount, setLastActivityCount] = useState(0)
+  const [processingDonations, setProcessingDonations] = useState<Set<number>>(new Set())
+  const [processingGallery, setProcessingGallery] = useState<Set<number>>(new Set())
+  const [processingVerifications, setProcessingVerifications] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     const userType = localStorage.getItem('userType')
@@ -72,15 +75,25 @@ export default function AdminDashboard() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
+      const token = localStorage.getItem('token')
+      
       // Fetch listings
-      const listingsResponse = await fetch('/api/listings')
+      const listingsResponse = await fetch('/api/listings', {
+        headers: token ? {
+          'Authorization': `Bearer ${token}`
+        } : {}
+      })
       if (listingsResponse.ok) {
         const listingsData = await listingsResponse.json()
         setListings(listingsData.listings || [])
       }
 
       // Fetch pickup requests
-      const requestsResponse = await fetch('/api/pickup-requests')
+      const requestsResponse = await fetch('/api/pickup-requests', {
+        headers: token ? {
+          'Authorization': `Bearer ${token}`
+        } : {}
+      })
       if (requestsResponse.ok) {
         const requestsData = await requestsResponse.json()
         setPickupRequests(requestsData.requests || [])
@@ -105,7 +118,10 @@ export default function AdminDashboard() {
       })
       
       if (response.ok) {
-        const data = await response.json()
+        const response_data = await response.json()
+        // Extract data from standardized API response
+        const data = response_data.success ? response_data.data : response_data
+        
         const newActivities = data.activities || []
         
         // Check if there are new activities
@@ -139,7 +155,8 @@ export default function AdminDashboard() {
       })
       
       if (response.ok) {
-        const data = await response.json()
+        const response_data = await response.json()
+        const data = response_data.success ? response_data.data : response_data
         setGalleryPhotos(data.photos || [])
       }
     } catch (error) {
@@ -159,7 +176,8 @@ export default function AdminDashboard() {
       })
       
       if (response.ok) {
-        const data = await response.json()
+        const response_data = await response.json()
+        const data = response_data.success ? response_data.data : response_data
         setPendingVerifications(data.users || [])
       }
     } catch (error) {
@@ -169,15 +187,38 @@ export default function AdminDashboard() {
 
   const fetchDonations = useCallback(async () => {
     try {
-      const response = await fetch('/api/admin/donations')
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('No token found')
+        return
+      }
+
+      const response = await fetch('/api/admin/donations', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
       if (response.ok) {
-        const data = await response.json()
+        const response_data = await response.json()
+        const data = response_data.success ? response_data.data : response_data
+        console.log('Admin donations data:', data) // Debug log
+        console.log('UPI Donations count:', data.upiDonations?.length || 0)
+        console.log('Item Donations count:', data.itemDonations?.length || 0)
         setUpiDonations(data.upiDonations || [])
         setItemDonations(data.itemDonations || [])
+      } else {
+        console.error('Failed to fetch donations, status:', response.status)
+        const errorData = await response.json()
+        console.error('Error response:', errorData)
       }
       
-      // Fetch donation logs
-      const logsResponse = await fetch('/api/admin/donations/logs')
+      // Note: donation logs endpoint not refactored yet, keeping old format
+      const logsResponse = await fetch('/api/admin/donations/logs', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (logsResponse.ok) {
         const logsData = await logsResponse.json()
         setDonationLogs(logsData.logs || [])
@@ -188,7 +229,21 @@ export default function AdminDashboard() {
   }, [])
 
   const handleDonationAction = async (type: 'upi' | 'item', id: number, action: string, photoData?: string) => {
+    // Prevent multiple clicks
+    if (processingDonations.has(id)) {
+      return
+    }
+
     try {
+      // Mark as processing
+      setProcessingDonations(prev => new Set(prev).add(id))
+
+      const token = localStorage.getItem('token')
+      if (!token) {
+        showError('Authentication token not found')
+        return
+      }
+
       const endpoint = `/api/admin/donations/${type}/${id}/${action}`
       const body: any = { adminId: user?.id }
       
@@ -198,7 +253,10 @@ export default function AdminDashboard() {
 
       const response = await fetch(endpoint, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(body)
       })
 
@@ -206,16 +264,35 @@ export default function AdminDashboard() {
         showSuccess(`Donation ${action}d successfully!`)
         fetchDonations()
       } else {
-        showError('Failed to process action')
+        const errorData = await response.json()
+        console.error('Action error response:', errorData)
+        showError(errorData.message || errorData.error || 'Failed to process action')
       }
     } catch (error) {
       console.error('Donation action error:', error)
       showError('Failed to process action')
+    } finally {
+      // Remove from processing after a delay
+      setTimeout(() => {
+        setProcessingDonations(prev => {
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
+      }, 1000)
     }
   }
 
   const handleGalleryAction = async (photoId: number, action: string) => {
+    // Prevent multiple clicks
+    if (processingGallery.has(photoId)) {
+      return
+    }
+
     try {
+      // Mark as processing
+      setProcessingGallery(prev => new Set(prev).add(photoId))
+
       const token = localStorage.getItem('token')
       if (!token) return
       
@@ -239,11 +316,28 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Gallery action failed:', error)
       showError('Action failed')
+    } finally {
+      // Remove from processing after a delay
+      setTimeout(() => {
+        setProcessingGallery(prev => {
+          const next = new Set(prev)
+          next.delete(photoId)
+          return next
+        })
+      }, 1000)
     }
   }
 
   const handleVerificationAction = async (userId: number, action: string, adminNotes?: string) => {
+    // Prevent multiple clicks
+    if (processingVerifications.has(userId)) {
+      return
+    }
+
     try {
+      // Mark as processing
+      setProcessingVerifications(prev => new Set(prev).add(userId))
+
       const token = localStorage.getItem('token')
       if (!token) return
       
@@ -267,6 +361,15 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Verification action failed:', error)
       showError('Verification action failed')
+    } finally {
+      // Remove from processing after a delay
+      setTimeout(() => {
+        setProcessingVerifications(prev => {
+          const next = new Set(prev)
+          next.delete(userId)
+          return next
+        })
+      }, 1000)
     }
   }
 
@@ -362,7 +465,10 @@ export default function AdminDashboard() {
                 Last updated: {lastUpdate.toLocaleTimeString()}
               </div>
               <button
-                onClick={() => window.open('/api/admin/donations/preview-receipt', '_blank')}
+                onClick={() => {
+                  const token = localStorage.getItem('token')
+                  window.open(`/api/admin/donations/preview-receipt?token=${token}`, '_blank')
+                }}
                 className="px-3 py-1 rounded-md text-sm font-medium bg-purple-100 text-purple-800 hover:bg-purple-200"
                 title="Preview sample PDF receipt"
               >
@@ -789,9 +895,18 @@ export default function AdminDashboard() {
                               handleVerificationAction(user.id, 'approve', notes);
                             }
                           }}
-                          className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                          disabled={processingVerifications.has(user.id)}
+                          className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                         >
-                          ✅ Approve
+                          {processingVerifications.has(user.id) ? (
+                            <>
+                              <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                              Processing...
+                            </>
+                          ) : '✅ Approve'}
                         </button>
                         <button
                           onClick={() => {
@@ -801,9 +916,18 @@ export default function AdminDashboard() {
                               handleVerificationAction(user.id, 'reject', notes);
                             }
                           }}
-                          className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+                          disabled={processingVerifications.has(user.id)}
+                          className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                         >
-                          ❌ Reject
+                          {processingVerifications.has(user.id) ? (
+                            <>
+                              <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                              Processing...
+                            </>
+                          ) : '❌ Reject'}
                         </button>
                       </div>
                     </div>
@@ -956,15 +1080,33 @@ export default function AdminDashboard() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleGalleryAction(photo.id, 'approve')}
-                                className="flex-1 bg-green-600 text-white py-2 px-3 rounded text-sm font-medium hover:bg-green-700 transition-colors"
+                                disabled={processingGallery.has(photo.id)}
+                                className="flex-1 bg-green-600 text-white py-2 px-3 rounded text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                               >
-                                ✅ Approve
+                                {processingGallery.has(photo.id) ? (
+                                  <>
+                                    <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                    Processing...
+                                  </>
+                                ) : '✅ Approve'}
                               </button>
                               <button
                                 onClick={() => handleGalleryAction(photo.id, 'reject')}
-                                className="flex-1 bg-red-600 text-white py-2 px-3 rounded text-sm font-medium hover:bg-red-700 transition-colors"
+                                disabled={processingGallery.has(photo.id)}
+                                className="flex-1 bg-red-600 text-white py-2 px-3 rounded text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                               >
-                                ❌ Reject
+                                {processingGallery.has(photo.id) ? (
+                                  <>
+                                    <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                    Processing...
+                                  </>
+                                ) : '❌ Reject'}
                               </button>
                             </div>
                           </div>
@@ -999,7 +1141,8 @@ export default function AdminDashboard() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleGalleryAction(photo.id, 'toggle_public')}
-                                className={`flex-1 py-1 px-2 rounded text-xs font-medium transition-colors ${
+                                disabled={processingGallery.has(photo.id)}
+                                className={`flex-1 py-1 px-2 rounded text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                   photo.isPublic 
                                     ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' 
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1009,7 +1152,8 @@ export default function AdminDashboard() {
                               </button>
                               <button
                                 onClick={() => handleGalleryAction(photo.id, 'reject')}
-                                className="px-2 py-1 text-red-600 hover:text-red-800 text-xs"
+                                disabled={processingGallery.has(photo.id)}
+                                className="px-2 py-1 text-red-600 hover:text-red-800 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 🗑️
                               </button>
@@ -1060,15 +1204,33 @@ export default function AdminDashboard() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleDonationAction('upi', donation.id, 'approve')}
-                            className="flex-1 bg-green-600 text-white py-2 rounded text-sm hover:bg-green-700"
+                            disabled={processingDonations.has(donation.id)}
+                            className="flex-1 bg-green-600 text-white py-2 rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                           >
-                            ✅ Approve
+                            {processingDonations.has(donation.id) ? (
+                              <>
+                                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                Processing...
+                              </>
+                            ) : '✅ Approve'}
                           </button>
                           <button
                             onClick={() => handleDonationAction('upi', donation.id, 'reject')}
-                            className="flex-1 bg-red-600 text-white py-2 rounded text-sm hover:bg-red-700"
+                            disabled={processingDonations.has(donation.id)}
+                            className="flex-1 bg-red-600 text-white py-2 rounded text-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                           >
-                            ❌ Reject
+                            {processingDonations.has(donation.id) ? (
+                              <>
+                                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                Processing...
+                              </>
+                            ) : '❌ Reject'}
                           </button>
                         </div>
                       </div>
@@ -1101,7 +1263,10 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <button
-                        onClick={() => window.open(`/api/admin/donations/generate-receipt/${donation.id}?type=upi`, '_blank')}
+                        onClick={() => {
+                          const token = localStorage.getItem('token')
+                          window.open(`/api/admin/donations/generate-receipt/${donation.id}?type=upi&token=${token}`, '_blank')
+                        }}
                         className="ml-4 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
                       >
                         📄 Download Receipt
@@ -1142,15 +1307,33 @@ export default function AdminDashboard() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleDonationAction('item', donation.id, 'approve')}
-                            className="flex-1 bg-green-600 text-white py-2 rounded text-sm hover:bg-green-700"
+                            disabled={processingDonations.has(donation.id)}
+                            className="flex-1 bg-green-600 text-white py-2 rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                           >
-                            ✅ Approve & Notify
+                            {processingDonations.has(donation.id) ? (
+                              <>
+                                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                Processing...
+                              </>
+                            ) : '✅ Approve & Notify'}
                           </button>
                           <button
                             onClick={() => handleDonationAction('item', donation.id, 'reject')}
-                            className="flex-1 bg-red-600 text-white py-2 rounded text-sm hover:bg-red-700"
+                            disabled={processingDonations.has(donation.id)}
+                            className="flex-1 bg-red-600 text-white py-2 rounded text-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                           >
-                            ❌ Reject
+                            {processingDonations.has(donation.id) ? (
+                              <>
+                                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                Processing...
+                              </>
+                            ) : '❌ Reject'}
                           </button>
                         </div>
                       </div>
@@ -1213,7 +1396,10 @@ export default function AdminDashboard() {
                         <div>✅ Collected: {new Date(donation.collected_at || '').toLocaleString()}</div>
                       </div>
                       <button
-                        onClick={() => window.open(`/api/admin/donations/generate-receipt/${donation.id}`, '_blank')}
+                        onClick={() => {
+                          const token = localStorage.getItem('token')
+                          window.open(`/api/admin/donations/generate-receipt/${donation.id}?token=${token}`, '_blank')
+                        }}
                         className="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
                       >
                         📄 Download Receipt
@@ -1366,10 +1552,18 @@ export default function AdminDashboard() {
                     setSelectedDonation(null)
                     setCollectionPhoto('')
                   }}
-                  disabled={!collectionPhoto}
-                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                  disabled={!collectionPhoto || (selectedDonation && processingDonations.has(selectedDonation.id))}
+                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  ✅ Confirm Collection
+                  {selectedDonation && processingDonations.has(selectedDonation.id) ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Processing...
+                    </>
+                  ) : '✅ Confirm Collection'}
                 </button>
               </div>
             </div>

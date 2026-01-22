@@ -1,7 +1,19 @@
-import { NextResponse } from 'next/server'
-import { query } from '@/lib/database'
+import { NextResponse, NextRequest } from 'next/server'
+import { executeQuery, executeInTransaction } from '@/lib/database'
 import { sendEmail } from '@/lib/email'
 import { generateDonationReceipt } from '@/lib/pdfReceipt'
+import { 
+  handleError, 
+  handleSuccess, 
+  NotFoundError 
+} from '@/lib/errors'
+import { 
+  validateEnum, 
+  validateFields, 
+  parseInteger 
+} from '@/lib/validation'
+import { createAuthContext } from '@/lib/middleware'
+import { logInfo, logError } from '@/lib/logger'
 
 interface RouteParams {
   params: {
@@ -10,77 +22,95 @@ interface RouteParams {
   }
 }
 
+interface ItemDonationRecord {
+  id: number
+  item_title: string
+  quantity: number
+  pickup_datetime: Date
+  pickup_address: string
+  status: string
+  full_name: string
+  email: string
+  phone: string
+  donor_id: number
+}
+
+const ALLOWED_ACTIONS = ['approve', 'reject', 'collected'] as const
+type AllowedAction = typeof ALLOWED_ACTIONS[number]
+
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: RouteParams
 ) {
   try {
+    // Authenticate admin
+    const auth = createAuthContext(request)
+    auth.requireAdmin()
+
     const { id, action } = params
     const body = await request.json()
-    const { adminId, approvalPhoto } = body
+    const { approvalPhoto } = body
 
-    if (!['approve', 'reject', 'collected'].includes(action)) {
-      return NextResponse.json(
-        { error: 'Invalid action' },
-        { status: 400 }
-      )
-    }
+    // Validate action
+    validateFields([
+      { result: validateEnum(action, ALLOWED_ACTIONS), field: 'action' }
+    ])
 
-    let status = action
-    let updateFields = 'status = ?'
-    let updateValues: any[] = []
+    const donationId = parseInteger(id, 'Donation ID')
+    const adminId = auth.user.userId
+    
+    let status: string
+    let updateFields: string
+    let updateValues: any[]
 
     if (action === 'approve') {
       status = 'approved'
-      updateFields += ', reviewed_by = ?, reviewed_at = NOW()'
-      updateValues = [status, adminId || null]
+      updateFields = 'status = ?, reviewed_by = ?, reviewed_at = NOW()'
+      updateValues = [status, adminId, donationId]
     } else if (action === 'reject') {
       status = 'rejected'
-      updateFields += ', reviewed_by = ?, reviewed_at = NOW()'
-      updateValues = [status, adminId || null]
-    } else if (action === 'collected') {
-      updateFields += ', collected_at = NOW(), approval_photo = ?'
-      updateValues = [status, approvalPhoto || null]
+      updateFields = 'status = ?, reviewed_by = ?, reviewed_at = NOW()'
+      updateValues = [status, adminId, donationId]
+    } else {
+      status = 'collected'
+      updateFields = 'status = ?, collected_at = NOW(), approval_photo = ?'
+      updateValues = [status, approvalPhoto || null, donationId]
     }
 
-    updateValues.push(id)
-
     // Get donor and donation details for email
-    const donationDetails = await query(
+    const donations = await executeQuery<ItemDonationRecord[]>(
       `SELECT 
-        i.id, i.item_title, i.quantity, i.pickup_datetime, i.pickup_address, i.status,
+        i.id, i.item_title, i.quantity, i.pickup_datetime, i.pickup_address, i.status, i.donor_id,
         d.full_name, d.email, d.phone
        FROM item_donations i
        JOIN individual_donors d ON i.donor_id = d.id
        WHERE i.id = ?`,
-      [id]
+      [donationId]
     )
 
-    if (!donationDetails || donationDetails.length === 0) {
-      return NextResponse.json(
-        { error: 'Donation not found' },
-        { status: 404 }
-      )
+    if (donations.length === 0) {
+      throw new NotFoundError('Item donation not found')
     }
 
-    const donation = donationDetails[0]
-    const donorId = await query('SELECT donor_id FROM item_donations WHERE id = ?', [id])
-      .then(rows => rows[0]?.donor_id)
+    const donation = donations[0]
 
-    // Update item donation status
-    await query(
-      `UPDATE item_donations 
-       SET ${updateFields}
-       WHERE id = ?`,
-      updateValues
-    )
+    // Update item donation status and log action in transaction
+    await executeInTransaction(async (connection) => {
+      // Update donation status
+      await connection.execute(
+        `UPDATE item_donations 
+         SET ${updateFields}
+         WHERE id = ?`,
+        updateValues
+      )
 
-    // Log the action
-    await query(
-      `INSERT INTO donation_logs (donor_id, donation_type, donation_id, action, action_by) 
-       VALUES (?, 'item', ?, ?, ?)`,
-      [donorId, id, action, adminId || null]
-    )
+      // Log the action
+      await connection.execute(
+        `INSERT INTO donation_logs (donor_id, donation_type, donation_id, action, action_by) 
+         VALUES (?, 'item', ?, ?, ?)`,
+        [donation.donor_id, donationId, action, adminId]
+      )
+    })
 
     // Send email notifications
     if (action === 'approve') {
@@ -235,16 +265,14 @@ export async function PUT(
       })
     }
 
-    return NextResponse.json({
-      message: `Item donation ${action}d successfully`,
-      emailSent: true
-    })
+    logInfo(`Item donation ${action}d successfully`, { donationId, action, adminId })
+    
+    return handleSuccess(
+      { emailSent: true },
+      `Item donation ${action}d successfully`
+    )
 
   } catch (error) {
-    console.error('Item donation action error:', error)
-    return NextResponse.json(
-      { error: 'Failed to process action' },
-      { status: 500 }
-    )
+    return handleError(error as Error)
   }
 }

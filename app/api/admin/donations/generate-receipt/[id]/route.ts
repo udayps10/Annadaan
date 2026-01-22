@@ -1,6 +1,9 @@
-import { NextResponse } from 'next/server'
-import { query } from '@/lib/database'
+import { NextResponse, NextRequest } from 'next/server'
+import { executeQuery } from '@/lib/database'
 import { generateDonationReceipt } from '@/lib/pdfReceipt'
+import { createAuthContext } from '@/lib/middleware'
+import { handleError, NotFoundError } from '@/lib/errors'
+import { validateFields, validateEnum, parseInteger } from '@/lib/validation'
 
 interface RouteParams {
   params: {
@@ -8,18 +11,66 @@ interface RouteParams {
   }
 }
 
-export async function GET(request: Request, { params }: RouteParams) {
+interface UPIDonationDetail {
+  id: number
+  donor_id: number
+  amount: number
+  transaction_id: string
+  reviewed_at: Date
+  full_name: string
+  email: string
+  phone: string
+}
+
+interface ItemDonationDetail {
+  id: number
+  donor_id: number
+  transaction_id: string
+  item_title: string
+  quantity: number
+  collected_at: Date
+  full_name: string
+  email: string
+  phone: string
+}
+
+const ALLOWED_TYPES = ['upi', 'item'] as const
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = params
     const url = new URL(request.url)
-    const type = url.searchParams.get('type') || 'item' // 'item' or 'upi'
-    const donationId = parseInt(id)
+    const type = url.searchParams.get('type') || 'item'
+    const token = url.searchParams.get('token')
 
-    if (isNaN(donationId)) {
-      return NextResponse.json({ error: 'Invalid donation ID' }, { status: 400 })
+    // Authenticate admin - check Authorization header first, then query param
+    let auth
+    try {
+      auth = createAuthContext(request)
+    } catch (error) {
+      // If header auth fails, try token from query param
+      if (token) {
+        const requestWithToken = new NextRequest(request.url, {
+          headers: new Headers({
+            ...Object.fromEntries(request.headers),
+            'Authorization': `Bearer ${token}`
+          })
+        })
+        auth = createAuthContext(requestWithToken)
+      } else {
+        throw error
+      }
     }
+    auth.requireAdmin()
 
-    let donation: any
+    // Validate inputs
+    validateFields([
+      { result: validateEnum(type, ALLOWED_TYPES), field: 'type' }
+    ])
+
+    const donationId = parseInteger(id, 'Donation ID')
+
+    let donation: UPIDonationDetail | ItemDonationDetail
     let donationType: string
     let amount: number = 0
     let itemDescription: string | undefined
@@ -27,7 +78,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     if (type === 'upi') {
       // Fetch UPI donation details
-      const upiDonations = await query(
+      const upiDonations = await executeQuery<UPIDonationDetail[]>(
         `SELECT 
           ud.id,
           ud.donor_id,
@@ -41,21 +92,18 @@ export async function GET(request: Request, { params }: RouteParams) {
          JOIN individual_donors id ON ud.donor_id = id.id
          WHERE ud.id = ? AND ud.status = 'approved'`,
         [donationId]
-      ) as any[]
+      )
 
       if (upiDonations.length === 0) {
-        return NextResponse.json(
-          { error: 'UPI donation not found or not approved' },
-          { status: 404 }
-        )
+        throw new NotFoundError('UPI donation not found or not approved')
       }
 
       donation = upiDonations[0]
       donationType = 'UPI'
-      amount = parseFloat(donation.amount) || 0
+      amount = parseFloat(String(donation.amount)) || 0
     } else {
       // Fetch Item donation details
-      const itemDonations = await query(
+      const itemDonations = await executeQuery<ItemDonationDetail[]>(
         `SELECT 
           itd.id,
           itd.donor_id,
@@ -70,20 +118,16 @@ export async function GET(request: Request, { params }: RouteParams) {
          JOIN individual_donors id ON itd.donor_id = id.id
          WHERE itd.id = ? AND itd.status = 'collected'`,
         [donationId]
-      ) as any[]
+      )
 
       if (itemDonations.length === 0) {
-        return NextResponse.json(
-          { error: 'Item donation not found or not collected' },
-          { status: 404 }
-        )
+        throw new NotFoundError('Item donation not found or not collected')
       }
 
-      donation = itemDonations[0]
+      donation = itemDonations[0] as ItemDonationDetail
       donationType = 'Item'
       itemDescription = donation.item_title
       quantity = donation.quantity
-      // For item donations, we don't have monetary value, use symbolic amount
       amount = 0
     }
 
@@ -125,10 +169,6 @@ export async function GET(request: Request, { params }: RouteParams) {
       }
     })
   } catch (error) {
-    console.error('Generate receipt error:', error)
-    return NextResponse.json(
-      { error: 'Failed to generate receipt' },
-      { status: 500 }
-    )
+    return handleError(error as Error)
   }
 }

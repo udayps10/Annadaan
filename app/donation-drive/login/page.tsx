@@ -76,9 +76,10 @@ export default function DonorLoginPage() {
       }
 
       // Store donor ID in sessionStorage
-      if (data.donorId) {
-        sessionStorage.setItem('donorId', data.donorId.toString())
-        sessionStorage.setItem('donorName', data.fullName)
+      // API returns: { success: true, data: { donorId, fullName, ... }, message: '...' }
+      if (data.success && data.data?.donorId) {
+        sessionStorage.setItem('donorId', data.data.donorId.toString())
+        sessionStorage.setItem('donorName', data.data.fullName)
       }
 
       // Redirect to donation options

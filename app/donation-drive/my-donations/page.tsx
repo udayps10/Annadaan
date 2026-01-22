@@ -56,14 +56,23 @@ export default function MyDonationsPage() {
   const fetchDonations = async (id: string) => {
     try {
       const response = await fetch(`/api/donation-drive/my-donations?donorId=${id}`)
-      const data = await response.json()
+      const response_data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch donations')
+        throw new Error(response_data.error || response_data.message || 'Failed to fetch donations')
       }
+
+      // Extract data from standardized API response format
+      // API returns: { success: true, data: { upiDonations, itemDonations }, message: '...' }
+      const data = response_data.success ? response_data.data : response_data
+
+      console.log('Fetched donations data:', data) // Debug log
+      console.log('UPI Donations count:', data.upiDonations?.length || 0)
+      console.log('Item Donations count:', data.itemDonations?.length || 0)
 
       setUpiDonations(data.upiDonations || [])
       setItemDonations(data.itemDonations || [])
+      setError('') // Clear any previous errors
     } catch (err) {
       console.error('Fetch error:', err)
       setError(err instanceof Error ? err.message : 'Failed to load donations')

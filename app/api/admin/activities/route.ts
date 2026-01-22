@@ -1,28 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { executeQuery } from '@/lib/database'
-import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+import { createAuthContext } from '@/lib/middleware'
+import { handleError, handleSuccess } from '@/lib/errors'
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Authorization header missing or invalid' }, { status: 401 })
-    }
-
-    const token = authHeader.substring(7)
-    
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as any
-      
-      if (decoded.role !== 'admin') {
-        return NextResponse.json({ error: 'Access denied. Admin role required.' }, { status: 403 })
-      }
-    } catch (error) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-    }
+    // Authenticate admin
+    const auth = createAuthContext(request)
+    auth.requireAdmin()
 
     // Get recent activities (last 30 days)
     const activities = await executeQuery(`
@@ -155,7 +140,7 @@ export async function GET(request: NextRequest) {
       ORDER BY user.created_at DESC
     `) as any[]
 
-    return NextResponse.json({
+    return handleSuccess({
       activities,
       deliveries,
       userStats: userStatsResult[0] || {},
@@ -164,7 +149,6 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Admin activities API error:', error)
-    return NextResponse.json({ error: 'Failed to fetch admin activities' }, { status: 500 })
+    return handleError(error as Error)
   }
 }

@@ -88,11 +88,14 @@ export default function DonorRegistrationPage() {
         body: JSON.stringify(formData),
       })
 
-      const data = await response.json()
+      const response_data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Registration failed')
+        throw new Error(response_data.error || response_data.message || 'Registration failed')
       }
+
+      // Extract data from standardized API response format
+      const data = response_data.success ? response_data.data : response_data
 
       // Store donor ID in sessionStorage for donation flow
       if (data.donorId) {

@@ -122,10 +122,10 @@ export default function ItemDonationPage() {
         }),
       })
 
-      const data = await response.json()
+      const response_data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit donation')
+        throw new Error(response_data.error || response_data.message || 'Failed to submit donation')
       }
 
       setSuccess(true)

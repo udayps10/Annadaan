@@ -1,28 +1,25 @@
+/**
+ * Authentication Utilities
+ * Password hashing and verification
+ * Note: JWT functions moved to lib/middleware.ts for better organization
+ */
+
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { AUTH_CONFIG } from './config';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
-
+/**
+ * Hash password with bcrypt
+ */
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 12);
+  return bcrypt.hash(password, AUTH_CONFIG.bcryptRounds);
 }
 
+/**
+ * Verify password against hash
+ */
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
   return bcrypt.compare(password, hashedPassword);
 }
 
-export function generateToken(userId: number, role: string): string {
-  return jwt.sign(
-    { userId, role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-}
-
-export function verifyToken(token: string): any {
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch (error) {
-    return null;
-  }
-}
+// Re-export JWT functions from middleware for backward compatibility
+export { verifyToken, generateToken, type JWTPayload } from './middleware';

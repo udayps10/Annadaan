@@ -92,8 +92,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate token
-    const token = generateToken(userId, role);
+    // Generate token with payload object
+    const token = generateToken({
+      userId,
+      email,
+      role
+    });
 
     // If it's an admin user, we can update their status to approved immediately after creation
     if (role === 'admin') {
