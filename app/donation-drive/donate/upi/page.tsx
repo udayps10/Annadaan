@@ -428,16 +428,16 @@ export default function UPIDonationPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* QR Code */}
-                    <div className="bg-white rounded-lg p-4 text-center">
+                    {/* QR Code - Prominent Display */}
+                    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 text-center border-2 border-blue-200">
                       <img
                         src={qrCode}
                         alt="UPI QR Code"
-                        className="w-56 h-56 mx-auto"
+                        className="w-64 h-64 mx-auto shadow-lg rounded-lg"
                       />
-                      <div className="mt-4">
+                      <div className="mt-4 space-y-2">
                         {qrAmount > 0 ? (
-                          <p className="text-2xl font-bold text-blue-600">
+                          <p className="text-3xl font-bold text-blue-600">
                             ₹ {qrAmount.toFixed(2)}
                           </p>
                         ) : (
@@ -445,40 +445,27 @@ export default function UPIDonationPage() {
                             Enter amount in your UPI app
                           </p>
                         )}
-                        <p className="text-xs text-gray-500 mt-2 font-mono">
+                        <p className="text-sm text-gray-600 font-medium">
+                          Scan using any UPI app
+                        </p>
+                        <div className="flex items-center justify-center gap-2 text-xs text-gray-500 flex-wrap">
+                          <span>Google Pay</span>
+                          <span>•</span>
+                          <span>PhonePe</span>
+                          <span>•</span>
+                          <span>Paytm</span>
+                          <span>•</span>
+                          <span>BHIM</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-3 font-mono">
                           raunaksingh11@sbi
                         </p>
                       </div>
                     </div>
-
-                    {/* Open UPI App Button - ALWAYS VISIBLE and prominent */}
-                    <a
-                      href={upiUrl}
-                      className="block w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-center rounded-lg font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl"
-                    >
-                      📱 Open in UPI App
-                    </a>
-
-                    {/* Helper Text */}
-                    <div className="text-center">
-                      <p className="text-xs text-gray-500">
-                        {isMobile ? (
-                          <>
-                            <span className="block mb-1">🔹 Tap button to open UPI app</span>
-                            <span className="block">🔹 Or scan QR code from another device</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="block mb-1">🔹 Scan QR code with your mobile UPI app</span>
-                            <span className="block">🔹 Or click button to try opening on this device</span>
-                          </>
-                        )}
-                      </p>
-                    </div>
                     
                     <button
                       onClick={handleResetQR}
-                      className="w-full py-2 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all"
+                      className="w-full py-3 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all"
                     >
                       Change Amount
                     </button>
@@ -501,19 +488,19 @@ export default function UPIDonationPage() {
                     </li>
                     <li className="flex items-start">
                       <span className="font-bold mr-2 text-blue-600">3.</span>
-                      <span>Open any UPI app (GPay, PhonePe, Paytm, etc.)</span>
+                      <span>Open your UPI app and scan the QR code</span>
                     </li>
                     <li className="flex items-start">
                       <span className="font-bold mr-2 text-blue-600">4.</span>
-                      <span>Scan the QR code (amount is pre-filled)</span>
+                      <span>Complete the payment (amount is pre-filled)</span>
                     </li>
                     <li className="flex items-start">
                       <span className="font-bold mr-2 text-blue-600">5.</span>
-                      <span>Complete the payment</span>
+                      <span>Take a screenshot of payment confirmation</span>
                     </li>
                     <li className="flex items-start">
                       <span className="font-bold mr-2 text-blue-600">6.</span>
-                      <span>Take a screenshot and upload below</span>
+                      <span>Upload the screenshot below for verification</span>
                     </li>
                   </ol>
                 </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import ApprovedDonationsDisplay from '@/components/ApprovedDonationsDisplay'
@@ -8,6 +8,14 @@ import { getEventDonations } from '@/config/event-donations'
 
 export default function RepublicDay2026() {
   const [activeTab, setActiveTab] = useState<'about' | 'donate' | 'donors'>('about')
+  const donateMethodRef = useRef<HTMLDivElement>(null)
+
+  const handleDonateClick = () => {
+    setActiveTab('donate')
+    setTimeout(() => {
+      donateMethodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50">
@@ -41,7 +49,7 @@ export default function RepublicDay2026() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setActiveTab('donate')}
+                onClick={handleDonateClick}
                 className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
               >
                 Donate Now 🎁
@@ -188,7 +196,7 @@ export default function RepublicDay2026() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className="bg-white rounded-2xl shadow-xl p-8">
+              <div className="bg-white rounded-2xl shadow-xl p-8" ref={donateMethodRef}>
                 <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">
                   Choose Your Donation Method
                 </h2>
