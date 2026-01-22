@@ -37,6 +37,7 @@ export default function HomePage() {
 
   // NEW: Donations dropdown state
   const [donationsDropdownOpen, setDonationsDropdownOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -67,6 +68,27 @@ export default function HomePage() {
                 <img src="/logo.png" alt="Annadaan" className="h-10" />
               </div>
             </motion.div>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-green-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
+              >
+                <span className="sr-only">Open main menu</span>
+                {!mobileMenuOpen ? (
+                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                ) : (
+                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            
+            {/* Desktop menu */}
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
                 {['Features', 'How It Works', 'About'].map((item, index) => (
@@ -172,6 +194,69 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+        
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="md:hidden border-t border-gray-200"
+            >
+              <div className="px-2 pt-2 pb-3 space-y-1">
+                {['Features', 'How It Works', 'About'].map((item) => (
+                  <a
+                    key={item}
+                    href={`#${item.toLowerCase().replace(' ', '-')}`}
+                    className="text-gray-700 hover:text-green-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item}
+                  </a>
+                ))}
+                
+                {/* Donations submenu */}
+                <div className="space-y-1">
+                  <div className="text-gray-700 px-3 py-2 text-base font-medium">
+                    Donations
+                  </div>
+                  <Link href="/events/republic-day-2026">
+                    <div className="text-gray-600 hover:text-green-600 hover:bg-gray-50 block px-6 py-2 rounded-md text-sm" onClick={() => setMobileMenuOpen(false)}>
+                      🇮🇳 Republic Day 2026
+                    </div>
+                  </Link>
+                  <Link href="/events/independence-day-2026">
+                    <div className="text-gray-600 hover:text-green-600 hover:bg-gray-50 block px-6 py-2 rounded-md text-sm" onClick={() => setMobileMenuOpen(false)}>
+                      🎆 Independence Day 2026
+                    </div>
+                  </Link>
+                </div>
+                
+                <a
+                  href="/gallery"
+                  className="text-gray-700 hover:text-green-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Gallery
+                </a>
+                
+                <Link href="/login">
+                  <div className="text-gray-700 hover:text-green-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setMobileMenuOpen(false)}>
+                    Login
+                  </div>
+                </Link>
+                
+                <Link href="/register">
+                  <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white block px-3 py-2 rounded-md text-base font-medium text-center mx-2 mt-2" onClick={() => setMobileMenuOpen(false)}>
+                    Get Started
+                  </div>
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.nav>
 
       {/* Hero Section */}
@@ -364,10 +449,11 @@ export default function HomePage() {
             animate={inView1 ? "animate" : "initial"}
           >
             {[
-              { number: "1.2M+", label: "Meals Rescued", icon: "🍽️", color: "green" },
-              { number: "2.4K", label: "Tons CO₂ Saved", icon: "🌱", color: "emerald" },
-              { number: "500+", label: "Active Partners", icon: "🤝", color: "blue" },
-              { number: "50+", label: "Cities Covered", icon: "🏙️", color: "purple" }
+              { number: "2026", label: "Founded", icon: "📅", color: "green" },
+{ number: "0", label: "Meals Rescued (Yet)", icon: "🍽️", color: "emerald" },
+{ number: "12+", label: "Volunteers Onboarded", icon: "🤝", color: "blue" },
+{ number: "3", label: "Pilot Cities Planned", icon: "🏙️", color: "purple" }
+
             ].map((stat, index) => (
               <motion.div 
                 key={index}
@@ -572,72 +658,7 @@ export default function HomePage() {
       </section>
 
       {/* Gallery Showcase */}
-      <section className="py-20 bg-gradient-to-br from-green-50 to-primary-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Stories of Impact
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              See the beautiful moments when good food reaches people in need. Every story shows how our community comes together to make a difference.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            {/* Sample Gallery Items */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-              <div className="aspect-square bg-gradient-to-br from-green-200 to-primary-200 flex items-center justify-center">
-                <div className="text-6xl">🍽️</div>
-              </div>
-              <div className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Community Lunch</h3>
-                <p className="text-sm text-gray-600 mb-3">45 families served warm meals at the downtown shelter</p>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>📍 Downtown Center</span>
-                  <span>👥 45 helped</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-              <div className="aspect-square bg-gradient-to-br from-blue-200 to-purple-200 flex items-center justify-center">
-                <div className="text-6xl">🎂</div>
-              </div>
-              <div className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Holiday Distribution</h3>
-                <p className="text-sm text-gray-600 mb-3">Special holiday meals shared with seniors</p>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>📍 Senior Center</span>
-                  <span>👥 80 helped</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-              <div className="aspect-square bg-gradient-to-br from-yellow-200 to-orange-200 flex items-center justify-center">
-                <div className="text-6xl">🥗</div>
-              </div>
-              <div className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">School Program</h3>
-                <p className="text-sm text-gray-600 mb-3">Fresh produce distributed to student families</p>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>📍 Local School</span>
-                  <span>👥 120 helped</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="text-center">
-            <Link 
-              href="/gallery" 
-              className="inline-flex items-center bg-primary-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
-            >
-              📸 View Full Gallery
-            </Link>
-          </div>
-        </div>
-      </section>
+      
 
       {/* Enhanced Call to Action */}
       <section className="py-20 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 relative overflow-hidden">

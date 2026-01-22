@@ -388,7 +388,7 @@ export default function DonorRegistrationPage() {
             <p className="text-gray-600 text-sm">
               Need help? Contact us at{' '}
               <a href="mailto:support@annadaan.org" className="text-orange-600 hover:text-orange-700 font-semibold">
-                support@annadaan.org
+                annadaan.mission@gmail.com
               </a>
             </p>
           </motion.div>

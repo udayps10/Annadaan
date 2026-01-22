@@ -457,7 +457,7 @@ export default function TermsPage() {
           >
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <a 
-                href="mailto:support@annadaan.com" 
+                href="mailto:annadaan.mission@gmail.com" 
                 className="group bg-white text-green-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl relative overflow-hidden flex items-center"
               >
                 <span className="mr-2 text-2xl">📧</span>

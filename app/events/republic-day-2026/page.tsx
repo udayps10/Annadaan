@@ -2,13 +2,14 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import ApprovedDonationsDisplay from '@/components/ApprovedDonationsDisplay'
 import { getEventDonations } from '@/config/event-donations'
 
 export default function RepublicDay2026() {
   const [activeTab, setActiveTab] = useState<'about' | 'donate' | 'donors'>('about')
   const donateMethodRef = useRef<HTMLDivElement>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleDonateClick = () => {
     setActiveTab('donate')
@@ -19,6 +20,108 @@ export default function RepublicDay2026() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50">
+      {/* Navigation */}
+      <motion.nav 
+        className="bg-white/95 backdrop-blur-md border-b border-orange-200 sticky top-0 z-50"
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <motion.div 
+              className="flex items-center"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Link href="/" className="flex-shrink-0">
+                <img src="/logo.png" alt="Annadaan" className="h-10" />
+              </Link>
+            </motion.div>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-orange-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-orange-500"
+              >
+                <span className="sr-only">Open main menu</span>
+                {!mobileMenuOpen ? (
+                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                ) : (
+                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            
+            {/* Desktop menu */}
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-4">
+                <Link href="/" className="text-gray-700 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Home
+                </Link>
+                <Link href="/events/republic-day-2026" className="text-orange-600 font-semibold px-3 py-2 rounded-md text-sm">
+                  Republic Day 2026
+                </Link>
+                <Link href="/gallery" className="text-gray-700 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Gallery
+                </Link>
+                <Link href="/login" className="text-gray-700 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Login
+                </Link>
+                <Link href="/register" className="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:from-orange-700 hover:to-orange-800 transition-all transform hover:scale-105 shadow-lg">
+                  Get Started
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="md:hidden border-t border-gray-200"
+            >
+              <div className="px-2 pt-2 pb-3 space-y-1">
+                <Link href="/">
+                  <div className="text-gray-700 hover:text-orange-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setMobileMenuOpen(false)}>
+                    Home
+                  </div>
+                </Link>
+                <Link href="/events/republic-day-2026">
+                  <div className="text-orange-600 bg-orange-50 font-semibold block px-3 py-2 rounded-md text-base" onClick={() => setMobileMenuOpen(false)}>
+                    Republic Day 2026
+                  </div>
+                </Link>
+                <Link href="/gallery">
+                  <div className="text-gray-700 hover:text-orange-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setMobileMenuOpen(false)}>
+                    Gallery
+                  </div>
+                </Link>
+                <Link href="/login">
+                  <div className="text-gray-700 hover:text-orange-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setMobileMenuOpen(false)}>
+                    Login
+                  </div>
+                </Link>
+                <Link href="/register">
+                  <div className="bg-gradient-to-r from-orange-600 to-orange-700 text-white block px-3 py-2 rounded-md text-base font-medium text-center mx-2 mt-2" onClick={() => setMobileMenuOpen(false)}>
+                    Get Started
+                  </div>
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.nav>
+
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-orange-600 via-white to-green-600 opacity-10"></div>
@@ -164,29 +267,34 @@ export default function RepublicDay2026() {
 
               {/* Impact Stats */}
               <div className="bg-white rounded-2xl shadow-xl p-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
-                  <span className="mr-3">📊</span>
-                  Our Impact (All Events)
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-orange-600 mb-2">10,000+</div>
-                    <div className="text-gray-600">Meals Served</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-green-600 mb-2">500+</div>
-                    <div className="text-gray-600">Donors</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-blue-600 mb-2">50+</div>
-                    <div className="text-gray-600">Volunteers</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-purple-600 mb-2">15+</div>
-                    <div className="text-gray-600">Cities</div>
-                  </div>
-                </div>
-              </div>
+  <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+    <span className="mr-3">🚀</span>
+    Our Journey So Far
+  </h2>
+
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+    <div className="text-center">
+      <div className="text-4xl font-bold text-orange-600 mb-2">0</div>
+      <div className="text-gray-600">Meals Rescued (Yet)</div>
+    </div>
+
+    <div className="text-center">
+      <div className="text-4xl font-bold text-green-600 mb-2">Founding Team</div>
+      <div className="text-gray-600">Core Members</div>
+    </div>
+
+    <div className="text-center">
+      <div className="text-4xl font-bold text-blue-600 mb-2">Onboarding</div>
+      <div className="text-gray-600">Volunteers</div>
+    </div>
+
+    <div className="text-center">
+      <div className="text-4xl font-bold text-purple-600 mb-2">Pilot Phase</div>
+      <div className="text-gray-600">Cities Planned</div>
+    </div>
+  </div>
+</div>
+
             </motion.div>
           )}
 
@@ -262,7 +370,7 @@ export default function RepublicDay2026() {
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-600 mr-3">✓</span>
-                    <span>UPI donations: Min ₹50, any amount welcomed. May take 24-48 hours for admin approval.</span>
+                    <span>UPI donations: Any amount welcomed. May take 24-48 hours for admin approval.</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-600 mr-3">✓</span>
