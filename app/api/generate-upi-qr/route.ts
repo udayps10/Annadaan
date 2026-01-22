@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       payeeName: UPI_CONFIG.payeeName,
       includeAmount: includeAmount,
       bankLimitGuidance: includeAmount ? 
-        "If you see 'Bank limit exceeded', please try: (1) A smaller amount, (2) Scanning the QR code, (3) Using another UPI app or bank account" :
+        "If you see 'Bank limit exceeded', please try:  (1) Scanning the QR code" :
         "Enter your preferred amount in the UPI app after opening the link"
     })
 
