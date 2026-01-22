@@ -13,6 +13,7 @@ const fadeInUp = {
 
 export default function UPIDonationPage() {
   const router = useRouter()
+  
   const [donorId, setDonorId] = useState<string | null>(null)
   const [screenshot, setScreenshot] = useState<string>('')
   const [isUploading, setIsUploading] = useState(false)
@@ -28,6 +29,9 @@ export default function UPIDonationPage() {
   const [isGeneratingQR, setIsGeneratingQR] = useState(false)
   const [qrError, setQrError] = useState('')
   const [isMobile, setIsMobile] = useState(false)
+  const [includeAmount, setIncludeAmount] = useState(true) // NEW: Flexible amount mode
+  const [bankLimitGuidance, setBankLimitGuidance] = useState('') // NEW: Bank limit help text
+  const [manualAmount, setManualAmount] = useState<string>('') // NEW: Manual amount input for proof upload
 
   useEffect(() => {
     const storedDonorId = sessionStorage.getItem('donorId')
@@ -50,14 +54,17 @@ export default function UPIDonationPage() {
     
     const amountNum = parseFloat(amount)
     
-    if (!amount || isNaN(amountNum) || amountNum <= 0) {
-      setQrError('Please enter a valid amount greater than 0')
-      return
-    }
+    // Only validate amount if includeAmount is true
+    if (includeAmount) {
+      if (!amount || isNaN(amountNum) || amountNum <= 0) {
+        setQrError('Please enter a valid amount greater than 0')
+        return
+      }
 
-    if (amountNum > 100000) {
-      setQrError('Amount cannot exceed ₹1,00,000')
-      return
+      if (amountNum > 100000) {
+        setQrError('Amount cannot exceed ₹1,00,000')
+        return
+      }
     }
 
     setIsGeneratingQR(true)
@@ -68,7 +75,10 @@ export default function UPIDonationPage() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ amount: amountNum })
+        body: JSON.stringify({ 
+          amount: includeAmount ? amountNum : undefined,
+          includeAmount 
+        })
       })
 
       const data = await response.json()
@@ -79,7 +89,8 @@ export default function UPIDonationPage() {
 
       setQrCode(data.qrCode)
       setUpiUrl(data.upiUrl)
-      setQrAmount(data.amount)
+      setQrAmount(includeAmount ? data.amount : 0)
+      setBankLimitGuidance(data.bankLimitGuidance || '')
       setQrError('')
     } catch (err) {
       setQrError(err instanceof Error ? err.message : 'Failed to generate QR code')
@@ -94,6 +105,7 @@ export default function UPIDonationPage() {
     setUpiUrl('')
     setQrAmount(0)
     setQrError('')
+    setBankLimitGuidance('')
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,6 +158,19 @@ export default function UPIDonationPage() {
       return
     }
 
+    // Use manual amount if provided, otherwise use QR amount or initial amount
+    const finalAmount = manualAmount ? parseFloat(manualAmount) : (qrAmount || parseFloat(amount) || 0)
+    
+    if (!finalAmount || finalAmount <= 0) {
+      setError('Please enter the amount you paid')
+      return
+    }
+
+    if (finalAmount > 100000) {
+      setError('Amount cannot exceed ₹1,00,000')
+      return
+    }
+
     setIsSubmitting(true)
     setError('')
 
@@ -158,7 +183,7 @@ export default function UPIDonationPage() {
         body: JSON.stringify({
           donorId: parseInt(donorId),
           paymentScreenshot: screenshot,
-          amount: qrAmount || parseFloat(amount) || 0
+          amount: finalAmount
         }),
       })
 
@@ -301,33 +326,87 @@ export default function UPIDonationPage() {
                 Step 1: Scan & Pay
               </h2>
               
+              {/* Bank Limit Guidance - Always visible at top */}
+              {bankLimitGuidance && (
+                <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 mb-4">
+                  <div className="flex items-start">
+                    <span className="text-2xl mr-3">💡</span>
+                    <div>
+                      <h4 className="font-bold text-gray-900 mb-1">Helpful Tip</h4>
+                      <p className="text-sm text-gray-700">{bankLimitGuidance}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               {/* QR Code Display */}
               <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl p-6 mb-6">
                 {!qrCode ? (
                   <div className="space-y-4">
-                    {/* Amount Input */}
-                    <div>
-                      <label htmlFor="amount" className="block text-sm font-semibold text-gray-700 mb-2">
-                        Donation Amount (₹) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="amount"
-                        type="number"
-                        min="1"
-                        max="100000"
-                        step="1"
-                        placeholder="Enter amount"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleGenerateQR()
-                          }
-                        }}
-                        disabled={isGeneratingQR}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-lg"
-                      />
+                    {/* NEW: Amount Mode Toggle */}
+                    <div className="bg-white rounded-lg p-4 mb-4 border-2 border-blue-200">
+                      <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                        <span className="mr-2">⚙️</span>
+                        Payment Mode
+                      </h3>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-700">
+                            {includeAmount ? 'Pre-fill Amount' : 'Enter in App'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {includeAmount 
+                              ? 'Amount will be pre-filled in UPI app' 
+                              : 'You can enter any amount in your UPI app'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setIncludeAmount(!includeAmount)}
+                          className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                            includeAmount ? 'bg-blue-600' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                              includeAmount ? 'translate-x-7' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                      {!includeAmount && (
+                        <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-2">
+                          <p className="text-xs text-green-700">
+                            ✅ Best for avoiding "Bank limit exceeded" errors
+                          </p>
+                        </div>
+                      )}
                     </div>
+                    
+                    {/* Amount Input - Only show if includeAmount is true */}
+                    {includeAmount && (
+                      <div>
+                        <label htmlFor="amount" className="block text-sm font-semibold text-gray-700 mb-2">
+                          Donation Amount (₹) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="amount"
+                          type="number"
+                          min="1"
+                          max="100000"
+                          step="1"
+                          placeholder="Enter amount"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleGenerateQR()
+                            }
+                          }}
+                          disabled={isGeneratingQR}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-lg"
+                        />
+                      </div>
+                    )}
 
                     {qrError && (
                       <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -344,7 +423,7 @@ export default function UPIDonationPage() {
                           : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
                       }`}
                     >
-                      {isGeneratingQR ? 'Generating...' : 'Generate QR Code'}
+                      {isGeneratingQR ? 'Generating...' : `Generate ${includeAmount ? 'QR Code' : 'Flexible QR Code'}`}
                     </button>
                   </div>
                 ) : (
@@ -357,47 +436,41 @@ export default function UPIDonationPage() {
                         className="w-56 h-56 mx-auto"
                       />
                       <div className="mt-4">
-                        <p className="text-2xl font-bold text-blue-600">
-                          ₹ {qrAmount.toFixed(2)}
-                        </p>
+                        {qrAmount > 0 ? (
+                          <p className="text-2xl font-bold text-blue-600">
+                            ₹ {qrAmount.toFixed(2)}
+                          </p>
+                        ) : (
+                          <p className="text-lg font-bold text-green-600">
+                            Enter amount in your UPI app
+                          </p>
+                        )}
                         <p className="text-xs text-gray-500 mt-2 font-mono">
                           singhraunak1107@oksbi
                         </p>
                       </div>
                     </div>
 
-                    {/* Open UPI App Button - Prominent on Mobile */}
-                    {isMobile && (
-                      <a
-                        href={upiUrl}
-                        className="block w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-center rounded-lg font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl"
-                      >
-                        📱 Open UPI App
-                      </a>
-                    )}
-
-                    {/* Desktop: Show button but less prominent */}
-                    {!isMobile && (
-                      <a
-                        href={upiUrl}
-                        className="block w-full py-3 border-2 border-green-600 text-green-600 text-center rounded-lg font-semibold hover:bg-green-50 transition-all"
-                      >
-                        📱 Try Opening UPI App
-                      </a>
-                    )}
+                    {/* Open UPI App Button - ALWAYS VISIBLE and prominent */}
+                    <a
+                      href={upiUrl}
+                      className="block w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-center rounded-lg font-bold text-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl"
+                    >
+                      📱 Open in UPI App
+                    </a>
 
                     {/* Helper Text */}
                     <div className="text-center">
                       <p className="text-xs text-gray-500">
                         {isMobile ? (
                           <>
-                            <span className="block mb-1">🔹 Tap button to open UPI app with amount pre-filled</span>
+                            <span className="block mb-1">🔹 Tap button to open UPI app</span>
                             <span className="block">🔹 Or scan QR code from another device</span>
                           </>
                         ) : (
                           <>
                             <span className="block mb-1">🔹 Scan QR code with your mobile UPI app</span>
-                            <span className="block text-gray-400">(UPI deep link works best on mobile)</span>
+                            <span className="block">🔹 Or click button to try opening on this device</span>
                           </>
                         )}
                       </p>
@@ -458,6 +531,29 @@ export default function UPIDonationPage() {
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Manual Amount Input */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Amount Paid (₹) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100000"
+                    step="0.01"
+                    placeholder={qrAmount ? `${qrAmount} (from QR)` : "Enter amount you paid"}
+                    value={manualAmount}
+                    onChange={(e) => setManualAmount(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-lg"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    {qrAmount 
+                      ? `If you paid a different amount than ₹${qrAmount}, please enter it here`
+                      : "Enter the exact amount you paid via UPI"
+                    }
+                  </p>
+                </div>
+
                 {/* File Upload */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-3">

@@ -11,31 +11,30 @@ const UPI_CONFIG = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { amount } = body
+    const { amount, includeAmount = true } = body
 
-    // Validate amount
-    if (!amount || typeof amount !== 'number' || amount <= 0) {
-      return NextResponse.json(
-        { error: 'Invalid amount. Must be a positive number.' },
-        { status: 400 }
-      )
+    // Validate amount only if includeAmount is true
+    if (includeAmount) {
+      if (!amount || typeof amount !== 'number' || amount <= 0) {
+        return NextResponse.json(
+          { error: 'Invalid amount. Must be a positive number.' },
+          { status: 400 }
+        )
+      }
+
+      // Prevent unreasonably large amounts (security check)
+      if (amount > 100000) {
+        return NextResponse.json(
+          { error: 'Amount exceeds maximum limit of ₹1,00,000' },
+          { status: 400 }
+        )
+      }
     }
 
-    // Prevent unreasonably large amounts (security check)
-    if (amount > 100000) {
-      return NextResponse.json(
-        { error: 'Amount exceeds maximum limit of ₹1,00,000' },
-        { status: 400 }
-      )
-    }
-
-    // Construct UPI payment URL
-    const upiUrl = constructUPIUrl(
-      UPI_CONFIG.upiId,
-      UPI_CONFIG.payeeName,
-      amount,
-      UPI_CONFIG.currency
-    )
+    // Construct UPI payment URL based on mode
+    const upiUrl = includeAmount 
+      ? constructUPIUrl(UPI_CONFIG.upiId, UPI_CONFIG.payeeName, amount, UPI_CONFIG.currency)
+      : constructUPIUrlWithoutAmount(UPI_CONFIG.upiId, UPI_CONFIG.payeeName, UPI_CONFIG.currency)
 
     // Generate QR code as base64
     const qrCodeBase64 = await QRCode.toDataURL(upiUrl, {
@@ -49,9 +48,13 @@ export async function POST(request: NextRequest) {
       success: true,
       qrCode: qrCodeBase64,
       upiUrl: upiUrl,
-      amount: amount,
+      amount: includeAmount ? amount : null,
       upiId: UPI_CONFIG.upiId,
-      payeeName: UPI_CONFIG.payeeName
+      payeeName: UPI_CONFIG.payeeName,
+      includeAmount: includeAmount,
+      bankLimitGuidance: includeAmount ? 
+        "If you see 'Bank limit exceeded', please try: (1) A smaller amount, (2) Scanning the QR code, (3) Using another UPI app or bank account" :
+        "Enter your preferred amount in the UPI app after opening the link"
     })
 
   } catch (error) {
@@ -83,6 +86,27 @@ function constructUPIUrl(
     pa: upiId,
     pn: payeeName,
     am: amount.toFixed(2),
+    cu: currency
+  })
+
+  return `upi://pay?${params.toString()}`
+}
+
+/**
+ * Constructs a UPI payment URL WITHOUT amount (user enters in app)
+ * @param upiId - UPI ID of the payee
+ * @param payeeName - Name of the payee
+ * @param currency - Currency code (default: INR)
+ * @returns Properly encoded UPI URL without amount
+ */
+function constructUPIUrlWithoutAmount(
+  upiId: string,
+  payeeName: string,
+  currency: string = 'INR'
+): string {
+  const params = new URLSearchParams({
+    pa: upiId,
+    pn: payeeName,
     cu: currency
   })
 

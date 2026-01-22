@@ -204,6 +204,7 @@ DROP TABLE IF EXISTS `upi_donations`;
 CREATE TABLE `upi_donations` (
   `id` int NOT NULL AUTO_INCREMENT,
   `donor_id` int NOT NULL,
+  `campaign` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT 'general',
   `amount` decimal(10,2) DEFAULT NULL,
   `payment_screenshot` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
   `screenshot_filename` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -219,6 +220,7 @@ CREATE TABLE `upi_donations` (
   PRIMARY KEY (`id`),
   KEY `donor_id` (`donor_id`),
   KEY `status` (`status`),
+  KEY `campaign` (`campaign`),
   KEY `reviewed_by` (`reviewed_by`),
   CONSTRAINT `upi_donations_ibfk_1` FOREIGN KEY (`donor_id`) REFERENCES `individual_donors` (`id`) ON DELETE CASCADE,
   CONSTRAINT `upi_donations_ibfk_2` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
@@ -228,6 +230,7 @@ DROP TABLE IF EXISTS `item_donations`;
 CREATE TABLE `item_donations` (
   `id` int NOT NULL AUTO_INCREMENT,
   `donor_id` int NOT NULL,
+  `campaign` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT 'general',
   `transaction_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `item_title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,

@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import { useEffect, useState } from 'react'
+import EventAnnouncementModal from '@/components/EventAnnouncementModal'
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
@@ -34,8 +35,21 @@ export default function HomePage() {
   const [ref3, inView3] = useInView({ threshold: 0.1, triggerOnce: true })
   const [ref4, inView4] = useInView({ threshold: 0.1, triggerOnce: true })
 
+  // NEW: Donations dropdown state
+  const [donationsDropdownOpen, setDonationsDropdownOpen] = useState(false)
+
   return (
     <div className="min-h-screen overflow-x-hidden">
+      {/* Event Announcement Modal */}
+      <EventAnnouncementModal
+        eventName="Republic Day Donation Drive 2026"
+        eventDate="January 26, 2026"
+        eventPath="/events/republic-day-2026"
+        emoji="🇮🇳"
+        description="Join us in celebrating 77 years of Indian democracy by feeding those in need. Every contribution makes a difference!"
+        sessionStorageKey="hideRepublicDay2026Modal"
+      />
+
       {/* Navigation */}
       <motion.nav 
         className="bg-white/95 backdrop-blur-md border-b border-green-200 sticky top-0 z-50"
@@ -68,12 +82,76 @@ export default function HomePage() {
                     <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 group-hover:w-full transition-all duration-300"></span>
                   </motion.a>
                 ))}
+                
+                {/* NEW: Donations Dropdown */}
+                <div 
+                  className="relative"
+                  onMouseEnter={() => setDonationsDropdownOpen(true)}
+                  onMouseLeave={() => setDonationsDropdownOpen(false)}
+                >
+                  <motion.button
+                    className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors relative group flex items-center"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    Donations
+                    <svg 
+                      className={`ml-1 w-4 h-4 transition-transform ${donationsDropdownOpen ? 'rotate-180' : ''}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 group-hover:w-full transition-all duration-300"></span>
+                  </motion.button>
+                  
+                  <AnimatePresence>
+                    {donationsDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
+                      >
+                        {/* Republic Day */}
+                        <div className="group">
+                          <div className="px-4 py-3 text-sm font-semibold text-gray-500 bg-gray-50 flex items-center">
+                            <span className="mr-2">🇮🇳</span>
+                            Republic Day
+                          </div>
+                          <Link href="/events/republic-day-2026">
+                            <div className="px-6 py-3 hover:bg-green-50 transition-colors cursor-pointer border-b border-gray-100 text-gray-700 hover:text-green-600">
+                              → 2026
+                            </div>
+                          </Link>
+                        </div>
+                        
+                        {/* Independence Day */}
+                        <div className="group">
+                          <div className="px-4 py-3 text-sm font-semibold text-gray-500 bg-gray-50 flex items-center">
+                            <span className="mr-2">🎆</span>
+                            Independence Day
+                          </div>
+                          <Link href="/events/independence-day-2026">
+                            <div className="px-6 py-3 hover:bg-green-50 transition-colors cursor-pointer text-gray-700 hover:text-green-600">
+                              → 2026
+                            </div>
+                          </Link>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 <motion.a
                   href="/gallery"
                   className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors relative group"
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
+                  transition={{ delay: 0.7 }}
                 >
                   Gallery
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 group-hover:w-full transition-all duration-300"></span>
@@ -81,7 +159,7 @@ export default function HomePage() {
                 <motion.div
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 }}
+                  transition={{ delay: 0.8 }}
                 >
                   <Link href="/login" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                     Login
