@@ -151,7 +151,7 @@ export function logError(error: Error | ApiError, response?: ErrorResponse): voi
   const isOperational = isApiError ? error.isOperational : false;
   const logLevel = isOperational ? 'warn' : 'error';
 
-  // Build log message
+  // Build structured log data
   const logData = {
     timestamp,
     level: logLevel,
@@ -163,11 +163,13 @@ export function logError(error: Error | ApiError, response?: ErrorResponse): voi
     stack: !isProduction() ? error.stack : undefined,
   };
 
-  // Log to console (in production, this would go to a logging service)
+  // Log based on level
   if (logLevel === 'error') {
-    console.error('❌ ERROR:', JSON.stringify(logData, null, 2));
+    console.error('❌ ERROR:');
+    console.error(JSON.stringify(logData, null, 2));
   } else {
-    console.warn('⚠️  WARNING:', JSON.stringify(logData, null, 2));
+    console.warn('⚠️  WARNING:');
+    console.warn(JSON.stringify(logData, null, 2));
   }
 
   // In production, send to monitoring service (e.g., Sentry, DataDog)
@@ -296,7 +298,8 @@ export function logInfo(message: string, context?: Record<string, any>): void {
     message,
     context,
   };
-  console.log('ℹ️  INFO:', JSON.stringify(logData, null, 2));
+  console.log('ℹ️  INFO:');
+  console.log(JSON.stringify(logData, null, 2));
 }
 
 /**
@@ -309,7 +312,8 @@ export function logWarning(message: string, context?: Record<string, any>): void
     message,
     context,
   };
-  console.warn('⚠️  WARNING:', JSON.stringify(logData, null, 2));
+  console.warn('⚠️  WARNING:');
+  console.warn(JSON.stringify(logData, null, 2));
 }
 
 /**
@@ -323,6 +327,7 @@ export function logDebug(message: string, context?: Record<string, any>): void {
       message,
       context,
     };
-    console.log('🔍 DEBUG:', JSON.stringify(logData, null, 2));
+    console.log('🔍 DEBUG:');
+    console.log(JSON.stringify(logData, null, 2));
   }
 }

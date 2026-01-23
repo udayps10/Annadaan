@@ -72,7 +72,9 @@ export default function DonorLoginPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed')
+        // Extract error message from nested structure
+        const errorMessage = data.error?.message || data.error || data.message || 'Login failed'
+        throw new Error(errorMessage)
       }
 
       // Store donor ID in sessionStorage
