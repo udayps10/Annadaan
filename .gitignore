@@ -89,9 +89,7 @@ jspm_packages/
 *.sqlite
 *.sqlite3
 
-# Logs
-logs
-*.log
+
 
 # OS generated files
 .DS_Store
