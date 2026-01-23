@@ -266,34 +266,34 @@ export default function RepublicDay2026() {
               </div>
 
               {/* Impact Stats */}
-              <div className="bg-white rounded-2xl shadow-xl p-8">
-  <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
-    <span className="mr-3">🚀</span>
-    Our Journey So Far
-  </h2>
+              <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 flex items-center justify-center sm:justify-start">
+                  <span className="mr-3 text-3xl sm:text-4xl">🚀</span>
+                  <span className="text-center sm:text-left">Our Journey So Far</span>
+                </h2>
 
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-    <div className="text-center">
-      <div className="text-4xl font-bold text-orange-600 mb-2">0</div>
-      <div className="text-gray-600">Meals Rescued (Yet)</div>
-    </div>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  <div className="text-center p-4 bg-orange-50 rounded-xl">
+                    <div className="text-3xl sm:text-4xl font-bold text-orange-600 mb-2">0</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Meals Rescued (Yet)</div>
+                  </div>
 
-    <div className="text-center">
-      <div className="text-4xl font-bold text-green-600 mb-2">Founding Team</div>
-      <div className="text-gray-600">Core Members</div>
-    </div>
+                  <div className="text-center p-4 bg-green-50 rounded-xl">
+                    <div className="text-3xl sm:text-4xl font-bold text-green-600 mb-2">5+</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Core Members</div>
+                  </div>
 
-    <div className="text-center">
-      <div className="text-4xl font-bold text-blue-600 mb-2">Onboarding</div>
-      <div className="text-gray-600">Volunteers</div>
-    </div>
+                  <div className="text-center p-4 bg-blue-50 rounded-xl">
+                    <div className="text-3xl sm:text-4xl font-bold text-blue-600 mb-2">10+</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Volunteers</div>
+                  </div>
 
-    <div className="text-center">
-      <div className="text-4xl font-bold text-purple-600 mb-2">Pilot Phase</div>
-      <div className="text-gray-600">Cities Planned</div>
-    </div>
-  </div>
-</div>
+                  <div className="text-center p-4 bg-purple-50 rounded-xl">
+                    <div className="text-3xl sm:text-4xl font-bold text-purple-600 mb-2">3</div>
+                    <div className="text-xs sm:text-sm text-gray-600">Cities Planned</div>
+                  </div>
+                </div>
+              </div>
 
             </motion.div>
           )}

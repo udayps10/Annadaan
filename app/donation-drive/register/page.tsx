@@ -91,7 +91,12 @@ export default function DonorRegistrationPage() {
       const response_data = await response.json()
 
       if (!response.ok) {
-        throw new Error(response_data.error || response_data.message || 'Registration failed')
+        // Handle standardized error response format
+        const errorMessage = response_data.error?.message 
+          || response_data.message 
+          || response_data.error 
+          || 'Registration failed';
+        throw new Error(errorMessage)
       }
 
       // Extract data from standardized API response format
@@ -104,9 +109,20 @@ export default function DonorRegistrationPage() {
 
       // Success - redirect to donation page
       router.push('/donation-drive/donate')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error)
-      setSubmitError(error instanceof Error ? error.message : 'Failed to register. Please try again.')
+      
+      let errorMessage = 'Failed to register. Please try again.';
+      
+      if (error.name === 'AbortError') {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (error.message && typeof error.message === 'string') {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      setSubmitError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }

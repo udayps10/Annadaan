@@ -31,7 +31,42 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!email || !password || !name || !role || !phone) {
       return NextResponse.json({ 
+        success: false,
         message: 'Missing required fields: email, password, name, role, and phone are required' 
+      }, { status: 400 });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Invalid email format' 
+      }, { status: 400 });
+    }
+
+    // Validate phone format (10 digits for Indian numbers)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(phone.replace(/\s+/g, ''))) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Invalid phone number. Must be a valid 10-digit Indian mobile number' 
+      }, { status: 400 });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Password must be at least 6 characters long' 
+      }, { status: 400 });
+    }
+
+    // Validate role
+    if (!['vendor', 'ngo', 'admin'].includes(role)) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Invalid role. Must be vendor, ngo, or admin' 
       }, { status: 400 });
     }
 
@@ -42,7 +77,10 @@ export async function POST(request: NextRequest) {
     ) as any[];
 
     if (existingUser.length > 0) {
-      return NextResponse.json({ message: 'User already exists' }, { status: 400 });
+      return NextResponse.json({ 
+        success: false,
+        message: 'This email is already registered. Please use a different email or login.' 
+      }, { status: 400 });
     }
 
     // Hash password
@@ -113,6 +151,7 @@ export async function POST(request: NextRequest) {
       : 'User registered successfully. Please complete document verification.';
 
     return NextResponse.json({
+      success: true,
       message,
       token,
       user: {
@@ -124,8 +163,29 @@ export async function POST(request: NextRequest) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error);
-    return NextResponse.json({ message: 'Registration failed' }, { status: 500 });
+    
+    // Extract proper error message
+    let errorMessage = 'Registration failed. Please try again.';
+    
+    if (error.code === 'ER_DUP_ENTRY') {
+      if (error.sqlMessage?.includes('email')) {
+        errorMessage = 'This email is already registered.';
+      } else if (error.sqlMessage?.includes('phone')) {
+        errorMessage = 'This phone number is already registered.';
+      } else {
+        errorMessage = 'This account already exists.';
+      }
+    } else if (error.code === 'ER_DATA_TOO_LONG') {
+      errorMessage = 'One or more fields exceed the maximum length.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    return NextResponse.json({ 
+      success: false,
+      message: errorMessage 
+    }, { status: 500 });
   }
 }

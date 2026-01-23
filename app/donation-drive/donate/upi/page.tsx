@@ -131,7 +131,16 @@ export default function UPIDonationPage() {
       // Convert to base64
       const reader = new FileReader()
       reader.onloadend = () => {
-        setScreenshot(reader.result as string)
+        const base64String = reader.result as string
+        
+        // Check if base64 string is too large (max ~4MB after base64 encoding)
+        if (base64String.length > 5 * 1024 * 1024) {
+          setError('Image is too large after processing. Please choose a smaller image.')
+          setIsUploading(false)
+          return
+        }
+        
+        setScreenshot(base64String)
         setIsUploading(false)
       }
       reader.onerror = () => {
@@ -175,6 +184,10 @@ export default function UPIDonationPage() {
     setError('')
 
     try {
+      // Create abort controller for timeout
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
       const response = await fetch('/api/donation-drive/upi', {
         method: 'POST',
         headers: {
@@ -185,22 +198,40 @@ export default function UPIDonationPage() {
           paymentScreenshot: screenshot,
           amount: finalAmount
         }),
+        signal: controller.signal
       })
 
-      const response_data = await response.json()
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
-        throw new Error(response_data.error || response_data.message || 'Failed to submit donation')
+        const response_data = await response.json()
+        const errorMsg = typeof response_data === 'string'
+          ? response_data
+          : response_data.error || response_data.message || 'Failed to submit donation';
+        throw new Error(errorMsg)
       }
+      
+      const response_data = await response.json()
 
       setSuccess(true)
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
         router.push('/donation-drive/my-donations')
       }, 2000)
-    } catch (err) {
+    } catch (err: any) {
       console.error('Submission error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to submit donation. Please try again.')
+      
+      let errorMessage = 'Failed to submit donation. Please try again.';
+      
+      if (err.name === 'AbortError') {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (err.message && typeof err.message === 'string') {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      setError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }

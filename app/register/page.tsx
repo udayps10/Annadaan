@@ -104,17 +104,29 @@ export default function Register() {
         setError('Please fill in all required fields')
         return false
       }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address (e.g., user@example.com)')
+        return false
+      }
+      
+      // Validate phone format (10 digits)
+      const phoneRegex = /^[6-9]\d{9}$/
+      if (!phoneRegex.test(formData.phone.replace(/\s+/g, ''))) {
+        setError('Please enter a valid 10-digit Indian mobile number')
+        return false
+      }
+      
+      // Validate password
       if (formData.password.length < 6) {
         setPasswordError('Password must be at least 6 characters long')
         return false
       }
+      
       if (formData.password !== formData.confirmPassword) {
         setPasswordError('Passwords do not match')
-        return false
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(formData.email)) {
-        setError('Please enter a valid email address')
         return false
       }
     }
@@ -293,10 +305,17 @@ export default function Register() {
         }),
       })
 
-      const userData = await userResponse.json()
+      const userData = await userResponse.json();
 
       if (!userResponse.ok) {
-        throw new Error(userData.message || 'Registration failed')
+        const errorMsg = typeof userData === 'string' 
+          ? userData 
+          : userData.message || userData.error || 'Registration failed';
+        throw new Error(errorMsg);
+      }
+      
+      if (!userData.user || !userData.token) {
+        throw new Error('Invalid response from server. Please try again.');
       }
 
       // For admin users, skip document upload and redirect directly to admin dashboard
@@ -357,7 +376,21 @@ export default function Register() {
       router.push('/verification/status')
 
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.')
+      console.error('Registration error:', err)
+      
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (err.name === 'AbortError') {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (err.message && typeof err.message === 'string') {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err.error && typeof err.error === 'string') {
+        errorMessage = err.error;
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -484,7 +517,7 @@ export default function Register() {
         >
           <option value="vendor">Food Vendor</option>
           <option value="ngo">NGO/Charity</option>
-          <option value="admin">Administrator</option>
+          {/* <option value="admin">Administrator</option> */}
         </select>
       </div>
     </div>

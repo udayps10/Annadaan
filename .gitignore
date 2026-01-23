@@ -133,3 +133,7 @@ add_photo_columns.sql
 update_photo_column.sql
 
 *.sh
+
+.agents/*
+
+.github/skills/*
