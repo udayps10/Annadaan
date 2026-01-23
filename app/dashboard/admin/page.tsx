@@ -213,15 +213,20 @@ export default function AdminDashboard() {
         console.error('Error response:', errorData)
       }
       
-      // Note: donation logs endpoint not refactored yet, keeping old format
+      // Fetch donation logs
       const logsResponse = await fetch('/api/admin/donations/logs', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
       if (logsResponse.ok) {
-        const logsData = await logsResponse.json()
+        const logsResponseData = await logsResponse.json()
+        const logsData = logsResponseData.success ? logsResponseData.data : logsResponseData
+        console.log('Donation logs data:', logsData) // Debug log
+        console.log('Donation logs count:', logsData.logs?.length || 0)
         setDonationLogs(logsData.logs || [])
+      } else {
+        console.error('Failed to fetch donation logs, status:', logsResponse.status)
       }
     } catch (error) {
       console.error('Failed to fetch donations:', error)
@@ -1623,14 +1628,20 @@ export default function AdminDashboard() {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">🚚 Approved - Awaiting Collection</h2>
               <div className="space-y-4">
-                {itemDonations.filter(d => d.status === 'approved').length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-4xl mb-2">📦</div>
-                    <p className="text-gray-600">No items awaiting collection</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {itemDonations.filter(d => d.status === 'approved').map((donation) => (
+                {(() => {
+                  const approvedItems = itemDonations.filter(d => d.status === 'approved')
+                  console.log('Total item donations:', itemDonations.length)
+                  console.log('Approved items:', approvedItems.length)
+                  console.log('Item donations statuses:', itemDonations.map(d => `${d.id}: ${d.status}`))
+                  
+                  return approvedItems.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="text-4xl mb-2">📦</div>
+                      <p className="text-gray-600">No items awaiting collection</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {approvedItems.map((donation) => (
                       <div key={donation.id} className="border border-green-200 bg-green-50 rounded-lg p-4">
                         <div className="flex items-start justify-between mb-2">
                           <h4 className="font-semibold text-gray-900">{donation.item_title}</h4>
@@ -1655,7 +1666,8 @@ export default function AdminDashboard() {
                       </div>
                     ))}
                   </div>
-                )}
+                  )
+                })()}
               </div>
             </div>
 
