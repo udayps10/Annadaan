@@ -116,7 +116,7 @@ export default function EventAnnouncementModal({
                 <div className="bg-gradient-to-br from-orange-50 to-green-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6">
                   <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                     <div>
-                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-600">1K+</div>
+                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-600">~6K+</div>
                       <div className="text-[10px] sm:text-xs text-gray-600 mt-0.5">INR</div>
                     </div>
                     <div>
