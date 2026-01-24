@@ -1419,16 +1419,47 @@ export default function AdminDashboard() {
 
             {/* Approved UPI Donations */}
             <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">✅ Approved UPI Donations</h2>
+                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+                    {upiDonations.filter(d => d.status === 'approved').length}
+                  </span>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">✅ Approved UPI Donations</h2>
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-                  {upiDonations.filter(d => d.status === 'approved').length}
-                </span>
+                {upiDonations.filter(d => d.status === 'approved').length > 0 && (
+                  <button
+                    onClick={() => {
+                      const approvedDonations = upiDonations.filter(d => d.status === 'approved');
+                      const csv = [
+                        ['Donor Name', 'Phone', 'Amount', 'Donation Time', 'Reviewed At'].join(','),
+                        ...approvedDonations.map(d => [
+                          `"${d.full_name}"`,
+                          d.phone,
+                          d.amount,
+                          new Date(d.created_at).toLocaleString('en-IN'),
+                          d.reviewed_at ? new Date(d.reviewed_at).toLocaleString('en-IN') : 'N/A'
+                        ].join(','))
+                      ].join('\n');
+                      
+                      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                      const link = document.createElement('a');
+                      link.href = URL.createObjectURL(blob);
+                      link.download = `approved-upi-donations-${new Date().toISOString().split('T')[0]}.csv`;
+                      link.click();
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg font-medium text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Export to Excel</span>
+                  </button>
+                )}
               </div>
               <div className="space-y-3">
                 {upiDonations.filter(d => d.status === 'approved').length === 0 ? (
@@ -1438,63 +1469,67 @@ export default function AdminDashboard() {
                     <p className="text-gray-400 text-sm mt-1">Approved donations will appear here</p>
                   </div>
                 ) : (
-                  upiDonations.filter(d => d.status === 'approved').slice(0, 10).map((donation) => (
-                    <div key={donation.id} className="group border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 hover:shadow-md transition-all duration-200 flex items-center justify-between">
-                      <div className="flex items-center space-x-4 flex-1">
-                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md">
-                          {donation.full_name?.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <h4 className="font-bold text-gray-900 text-lg">₹{donation.amount}</h4>
-                            <span className="text-gray-400">•</span>
-                            <span className="font-semibold text-gray-700">{donation.full_name}</span>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
-                            <div className="flex items-center">
-                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                              </svg>
-                              {donation.email}
-                            </div>
-                            <div className="flex items-center">
-                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                              </svg>
-                              {donation.phone}
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-3 mt-2">
-                            <span className="text-xs text-gray-500 flex items-center">
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {new Date(donation.reviewed_at || '').toLocaleDateString()}
-                            </span>
-                            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                              donation.receipt_sent 
-                                ? 'bg-green-200 text-green-800' 
-                                : 'bg-orange-200 text-orange-800'
-                            }`}>
-                              {donation.receipt_sent ? '📄 Receipt Sent' : '⚠️ Receipt Pending'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const token = localStorage.getItem('token')
-                          window.open(`/api/admin/donations/generate-receipt/${donation.id}?type=upi&token=${token}`, '_blank')
-                        }}
-                        className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg font-medium text-sm"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                        </svg>
-                        <span>Download</span>
-                      </button>
-                    </div>
-                  ))
+                  <div className="overflow-x-auto rounded-lg border border-gray-200">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-gradient-to-r from-green-50 to-emerald-50 border-b-2 border-green-200">
+                        <tr>
+                          <th className="px-4 py-3 font-bold text-gray-700">Donor Name</th>
+                          <th className="px-4 py-3 font-bold text-gray-700">Phone</th>
+                          <th className="px-4 py-3 font-bold text-gray-700">Amount</th>
+                          <th className="px-4 py-3 font-bold text-gray-700">Donation Time</th>
+                          <th className="px-4 py-3 font-bold text-gray-700">Reviewed At</th>
+                          <th className="px-4 py-3 font-bold text-gray-700">Receipt</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {upiDonations.filter(d => d.status === 'approved').map((donation, idx) => (
+                          <tr key={donation.id} className={`hover:bg-green-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                  {donation.full_name?.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="font-semibold text-gray-900">{donation.full_name}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-gray-700">{donation.phone}</td>
+                            <td className="px-4 py-3">
+                              <span className="font-bold text-green-700 text-lg">₹{donation.amount}</span>
+                            </td>
+                            <td className="px-4 py-3 text-gray-600">
+                              {new Date(donation.created_at).toLocaleString('en-IN', { 
+                                dateStyle: 'short', 
+                                timeStyle: 'short' 
+                              })}
+                            </td>
+                            <td className="px-4 py-3 text-gray-600">
+                              {donation.reviewed_at 
+                                ? new Date(donation.reviewed_at).toLocaleString('en-IN', { 
+                                    dateStyle: 'short', 
+                                    timeStyle: 'short' 
+                                  })
+                                : 'N/A'
+                              }
+                            </td>
+                            <td className="px-4 py-3">
+                              <button
+                                onClick={() => {
+                                  const token = localStorage.getItem('token')
+                                  window.open(`/api/admin/donations/generate-receipt/${donation.id}?type=upi&token=${token}`, '_blank')
+                                }}
+                                className="flex items-center space-x-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                </svg>
+                                <span>PDF</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             </div>

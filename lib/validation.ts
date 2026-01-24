@@ -61,7 +61,14 @@ export function validatePhone(phone: string, fieldName: string = 'Phone number')
     return createResult(false, errors);
   }
 
-  const cleanedPhone = phone.replace(/\s+/g, '').replace(/^(\+91|91)?/, '');
+  // Remove spaces first
+  let cleanedPhone = phone.replace(/\s+/g, '');
+  
+  // Only remove country code if the number is longer than 10 digits
+  // This prevents removing '91' from numbers like 9137645007
+  if (cleanedPhone.length > 10) {
+    cleanedPhone = cleanedPhone.replace(/^(\+91|91)/, '');
+  }
 
   if (cleanedPhone.length !== VALIDATION_RULES.phone.length) {
     errors.push(`${fieldName} must be ${VALIDATION_RULES.phone.length} digits.`);
@@ -338,8 +345,13 @@ export function sanitizeEmail(email: string): string {
  */
 export function sanitizePhone(phone: string): string {
   if (typeof phone !== 'string') return '';
-  // Remove all non-digit characters and country code
-  return phone.replace(/\D/g, '').replace(/^(91)?/, '');
+  // Remove all non-digit characters
+  let cleaned = phone.replace(/\D/g, '');
+  // Only remove country code if the number is longer than 10 digits
+  if (cleaned.length > 10) {
+    cleaned = cleaned.replace(/^91/, '');
+  }
+  return cleaned;
 }
 
 /**
