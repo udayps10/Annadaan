@@ -21,6 +21,11 @@ export default function AdminDashboard() {
   const [upiDonations, setUpiDonations] = useState<any[]>([])
   const [itemDonations, setItemDonations] = useState<any[]>([])
   const [donationLogs, setDonationLogs] = useState<any[]>([])
+  const [loadingDonations, setLoadingDonations] = useState(true)
+  const [upiPage, setUpiPage] = useState(1)
+  const [itemPage, setItemPage] = useState(1)
+  const [upiPagination, setUpiPagination] = useState<any>({ total: 0, totalPages: 0 })
+  const [itemPagination, setItemPagination] = useState<any>({ total: 0, totalPages: 0 })
   const [showCollectionModal, setShowCollectionModal] = useState(false)
   const [selectedDonation, setSelectedDonation] = useState<any>(null)
   const [collectionPhoto, setCollectionPhoto] = useState<string>('')
@@ -187,13 +192,15 @@ export default function AdminDashboard() {
 
   const fetchDonations = useCallback(async () => {
     try {
+      setLoadingDonations(true)
       const token = localStorage.getItem('token')
       if (!token) {
         console.error('No token found')
+        setLoadingDonations(false)
         return
       }
 
-      const response = await fetch('/api/admin/donations', {
+      const response = await fetch(`/api/admin/donations?page=${upiPage}&limit=20`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -207,6 +214,10 @@ export default function AdminDashboard() {
         console.log('Item Donations count:', data.itemDonations?.length || 0)
         setUpiDonations(data.upiDonations || [])
         setItemDonations(data.itemDonations || [])
+        if (data.pagination) {
+          setUpiPagination(data.pagination.upi || { total: 0, totalPages: 0 })
+          setItemPagination(data.pagination.item || { total: 0, totalPages: 0 })
+        }
       } else {
         console.error('Failed to fetch donations, status:', response.status)
         const errorData = await response.json()
@@ -230,8 +241,17 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Failed to fetch donations:', error)
+    } finally {
+      setLoadingDonations(false)
     }
-  }, [])
+  }, [upiPage])
+
+  // Refetch donations when page changes
+  useEffect(() => {
+    if (user) {
+      fetchDonations()
+    }
+  }, [upiPage, user, fetchDonations])
 
   const handleDonationAction = async (type: 'upi' | 'item', id: number, action: string, photoData?: string) => {
     // Prevent multiple clicks
@@ -1306,11 +1326,16 @@ export default function AdminDashboard() {
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">💰 Pending UPI Donations</h2>
                 <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
-                  {upiDonations.filter(d => d.status === 'pending').length}
+                  {loadingDonations ? '...' : upiDonations.filter(d => d.status === 'pending').length}
                 </span>
               </div>
               <div className="space-y-4">
-                {upiDonations.filter(d => d.status === 'pending').length === 0 ? (
+                {loadingDonations ? (
+                  <div className="text-center py-16">
+                    <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-yellow-600 mb-4"></div>
+                    <p className="text-xl font-semibold text-gray-700">Loading donations...</p>
+                  </div>
+                ) : upiDonations.filter(d => d.status === 'pending').length === 0 ? (
                   <div className="text-center py-16 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl">
                     <div className="text-7xl mb-4">✅</div>
                     <p className="text-xl font-semibold text-gray-700 mb-2">All Clear!</p>
@@ -1433,24 +1458,34 @@ export default function AdminDashboard() {
                 </div>
                 {upiDonations.filter(d => d.status === 'approved').length > 0 && (
                   <button
-                    onClick={() => {
-                      const approvedDonations = upiDonations.filter(d => d.status === 'approved');
-                      const csv = [
-                        ['Donor Name', 'Phone', 'Amount', 'Donation Time', 'Reviewed At'].join(','),
-                        ...approvedDonations.map(d => [
-                          `"${d.full_name}"`,
-                          d.phone,
-                          d.amount,
-                          new Date(d.created_at).toLocaleString('en-IN'),
-                          d.reviewed_at ? new Date(d.reviewed_at).toLocaleString('en-IN') : 'N/A'
-                        ].join(','))
-                      ].join('\n');
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      // Fetch all approved donations for export
+                      const response = await fetch('/api/admin/donations?export=true', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                      });
                       
-                      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                      const link = document.createElement('a');
-                      link.href = URL.createObjectURL(blob);
-                      link.download = `approved-upi-donations-${new Date().toISOString().split('T')[0]}.csv`;
-                      link.click();
+                      if (response.ok) {
+                        const data = await response.json();
+                        const allApproved = data.success ? data.data.upiDonations : data.upiDonations;
+                        
+                        const csv = [
+                          ['Donor Name', 'Phone', 'Amount', 'Donation Time', 'Reviewed At'].join(','),
+                          ...allApproved.map((d: any) => [
+                            `"${d.full_name}"`,
+                            d.phone,
+                            d.amount,
+                            new Date(d.created_at).toLocaleString('en-IN'),
+                            d.reviewed_at ? new Date(d.reviewed_at).toLocaleString('en-IN') : 'N/A'
+                          ].join(','))
+                        ].join('\n');
+                        
+                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = `approved-upi-donations-${new Date().toISOString().split('T')[0]}.csv`;
+                        link.click();
+                      }
                     }}
                     className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg font-medium text-sm"
                   >
@@ -1462,7 +1497,12 @@ export default function AdminDashboard() {
                 )}
               </div>
               <div className="space-y-3">
-                {upiDonations.filter(d => d.status === 'approved').length === 0 ? (
+                {loadingDonations ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-600 mb-4"></div>
+                    <p className="text-lg font-semibold text-gray-700">Loading approved donations...</p>
+                  </div>
+                ) : upiDonations.filter(d => d.status === 'approved').length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-xl">
                     <div className="text-5xl mb-3">💰</div>
                     <p className="text-gray-600 font-medium">No approved UPI donations yet</p>
@@ -1529,6 +1569,56 @@ export default function AdminDashboard() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+                
+                {/* Pagination Controls */}
+                {!loadingDonations && upiDonations.filter(d => d.status === 'approved').length > 0 && (
+                  <div className="flex items-center justify-between mt-4 px-4 py-3 bg-gray-50 rounded-lg">
+                    <div className="text-sm text-gray-600">
+                      {upiPagination.totalPages > 1 ? (
+                        <>Showing page {upiPage} of {upiPagination.totalPages} ({upiPagination.total} total donations)</>
+                      ) : (
+                        <>Showing all {upiPagination.total || upiDonations.filter(d => d.status === 'approved').length} approved donations</>
+                      )}
+                    </div>
+                    {upiPagination.totalPages > 1 && (
+                      <div className="flex space-x-2">
+                      <button
+                        onClick={() => setUpiPage(p => Math.max(1, p - 1))}
+                        disabled={upiPage === 1}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+                      >
+                        Previous
+                      </button>
+                      <div className="flex space-x-1">
+                        {Array.from({ length: Math.min(5, upiPagination.totalPages) }, (_, i) => {
+                          const pageNum = i + 1;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setUpiPage(pageNum)}
+                              className={`px-3 py-2 rounded-lg font-medium text-sm ${
+                                upiPage === pageNum
+                                  ? 'bg-green-600 text-white'
+                                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                        {upiPagination.totalPages > 5 && <span className="px-2 py-2 text-gray-500">...</span>}
+                      </div>
+                      <button
+                        onClick={() => setUpiPage(p => Math.min(upiPagination.totalPages, p + 1))}
+                        disabled={upiPage === upiPagination.totalPages}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+                      >
+                        Next
+                      </button>
+                    </div>
+                    )}
                   </div>
                 )}
               </div>

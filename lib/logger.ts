@@ -3,10 +3,39 @@
  * 
  * Provides consistent logging interface for application events.
  * In production, these can be integrated with logging services like Winston, Pino, etc.
+ * 
+ * Environment Variables:
+ * - ENABLE_DEBUG_LOGS: "true" | "false" (default: false in production, true in development)
+ * - LOG_LEVEL: "debug" | "info" | "warning" | "error" (default: "debug")
+ * - ENABLE_STRUCTURED_LOGS: "true" | "false" (default: true in production, false in development)
  */
 
 export interface LogContext {
   [key: string]: any
+}
+
+// Configuration from environment variables
+const config = {
+  enableDebug: process.env.ENABLE_DEBUG_LOGS === 'true' || 
+               (process.env.ENABLE_DEBUG_LOGS !== 'false' && process.env.NODE_ENV !== 'production'),
+  logLevel: (process.env.LOG_LEVEL || 'debug') as 'debug' | 'info' | 'warning' | 'error',
+  structuredLogs: process.env.ENABLE_STRUCTURED_LOGS === 'true' || 
+                  (process.env.ENABLE_STRUCTURED_LOGS !== 'false' && process.env.NODE_ENV === 'production')
+}
+
+// Log level hierarchy
+const LOG_LEVELS = {
+  debug: 0,
+  info: 1,
+  warning: 2,
+  error: 3
+}
+
+/**
+ * Check if a log level should be logged based on configured minimum level
+ */
+function shouldLog(level: keyof typeof LOG_LEVELS): boolean {
+  return LOG_LEVELS[level] >= LOG_LEVELS[config.logLevel]
 }
 
 /**
@@ -61,10 +90,12 @@ function serializeContext(context?: LogContext): any {
  * Log informational messages
  */
 export function logInfo(message: string, context?: LogContext): void {
+  if (!shouldLog('info')) return
+  
   const serializedContext = serializeContext(context)
   
-  if (process.env.NODE_ENV === 'production') {
-    // In production, use structured JSON logging
+  if (config.structuredLogs) {
+    // Use structured JSON logging
     console.log(JSON.stringify({
       level: 'info',
       message,
@@ -72,7 +103,7 @@ export function logInfo(message: string, context?: LogContext): void {
       ...serializedContext
     }))
   } else {
-    // In development, use readable format
+    // Use readable format
     if (serializedContext && Object.keys(serializedContext).length > 0) {
       console.log(`ℹ️  [INFO] ${message}`, JSON.stringify(serializedContext, null, 2))
     } else {
@@ -85,11 +116,13 @@ export function logInfo(message: string, context?: LogContext): void {
  * Log error messages
  */
 export function logError(message: string, error?: Error | any, context?: LogContext): void {
+  if (!shouldLog('error')) return
+  
   const errorData = error ? serializeError(error) : undefined
   const serializedContext = serializeContext(context)
   
-  if (process.env.NODE_ENV === 'production') {
-    // In production, use structured JSON logging
+  if (config.structuredLogs) {
+    // Use structured JSON logging
     console.error(JSON.stringify({
       level: 'error',
       message,
@@ -98,7 +131,7 @@ export function logError(message: string, error?: Error | any, context?: LogCont
       ...serializedContext
     }))
   } else {
-    // In development, use readable format with full details
+    // Use readable format with full details
     console.error(`❌ [ERROR] ${message}`)
     if (errorData) {
       console.error('Error Details:', JSON.stringify(errorData, null, 2))
@@ -113,10 +146,12 @@ export function logError(message: string, error?: Error | any, context?: LogCont
  * Log warning messages
  */
 export function logWarning(message: string, error?: Error | any, context?: LogContext): void {
+  if (!shouldLog('warning')) return
+  
   const errorData = error ? serializeError(error) : undefined
   const serializedContext = serializeContext(context)
   
-  if (process.env.NODE_ENV === 'production') {
+  if (config.structuredLogs) {
     console.warn(JSON.stringify({
       level: 'warning',
       message,
@@ -136,11 +171,21 @@ export function logWarning(message: string, error?: Error | any, context?: LogCo
 }
 
 /**
- * Log debug messages (only in development)
+ * Log debug messages (respects ENABLE_DEBUG_LOGS environment variable)
  */
 export function logDebug(message: string, context?: LogContext): void {
-  if (process.env.NODE_ENV !== 'production') {
-    const serializedContext = serializeContext(context)
+  if (!config.enableDebug || !shouldLog('debug')) return
+  
+  const serializedContext = serializeContext(context)
+  
+  if (config.structuredLogs) {
+    console.debug(JSON.stringify({
+      level: 'debug',
+      message,
+      timestamp: new Date().toISOString(),
+      ...serializedContext
+    }))
+  } else {
     if (serializedContext && Object.keys(serializedContext).length > 0) {
       console.debug(`🔍 [DEBUG] ${message}`, JSON.stringify(serializedContext, null, 2))
     } else {

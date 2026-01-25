@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery, initializeDatabase } from '@/lib/database';
 
 export async function GET(request: NextRequest) {
+  return NextResponse.json({ 
+    error: 'Setup endpoint is disabled' 
+  }, { status: 403 });
+  
+  /* DISABLED - Uncomment only for initial setup
   try {
     await initializeDatabase();
     
@@ -100,4 +105,5 @@ export async function GET(request: NextRequest) {
     console.error('Database setup error:', error);
     return NextResponse.json({ error: 'Database setup failed' }, { status: 500 });
   }
+  */
 }
