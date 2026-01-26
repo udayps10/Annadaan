@@ -41,15 +41,15 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      {/* Event Announcement Modal */}
-      <EventAnnouncementModal
+      {/* Event Announcement Modal - Disabled */}
+      {/* <EventAnnouncementModal
         eventName="Republic Day Donation Drive 2026"
         eventDate="January 26, 2026"
         eventPath="/events/republic-day-2026"
         emoji="🇮🇳"
         description="Join us in celebrating 77 years of Indian democracy by feeding those in need. Every contribution makes a difference!"
         sessionStorageKey="hideRepublicDay2026Modal"
-      />
+      /> */}
 
       {/* Navigation */}
       <motion.nav 

@@ -169,3 +169,58 @@ html {
     @apply backdrop-blur-sm bg-white/80 border border-white/20;
   }
 }
+
+/* Custom Swiper styles for portrait gallery */
+.portrait-gallery .swiper-button-next,
+.portrait-gallery .swiper-button-prev {
+  color: #16a34a;
+  background: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid #bbf7d0;
+}
+
+.portrait-gallery .swiper-button-next:hover,
+.portrait-gallery .swiper-button-prev:hover {
+  background: #f0fdf4;
+  border-color: #16a34a;
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.2);
+}
+
+.portrait-gallery .swiper-button-next:after,
+.portrait-gallery .swiper-button-prev:after {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.portrait-gallery .swiper-pagination-bullet {
+  background: #16a34a;
+  opacity: 0.3;
+  width: 10px;
+  height: 10px;
+}
+
+.portrait-gallery .swiper-pagination-bullet-active {
+  opacity: 1;
+  background: linear-gradient(to right, #16a34a, #059669);
+}
+
+/* Smooth scroll behavior */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Reduced motion styles */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
