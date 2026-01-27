@@ -289,13 +289,13 @@ export default function AdminDashboard() {
         showSuccess(`Donation ${action}d successfully!`)
         fetchDonations()
       } else {
-        const errorData = await response.json()
-        console.error('Action error response:', errorData)
-        showError(errorData.message || errorData.error || 'Failed to process action')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Action error response:', response.status, errorData)
+        showError(errorData.message || errorData.error || `Failed to process action (Status: ${response.status})`)
       }
     } catch (error) {
       console.error('Donation action error:', error)
-      showError('Failed to process action')
+      showError(`Failed to process action: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       // Remove from processing after a delay
       setTimeout(() => {

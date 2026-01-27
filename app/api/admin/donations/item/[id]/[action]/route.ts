@@ -65,16 +65,22 @@ export async function PUT(
 
     if (action === 'approve') {
       status = 'approved'
-      updateFields = 'status = ?, reviewed_by = ?, reviewed_at = NOW()'
-      updateValues = [status, adminId, donationId]
+      updateFields = 'status = ?, reviewed_at = NOW()'
+      updateValues = [status, donationId]
     } else if (action === 'reject') {
       status = 'rejected'
-      updateFields = 'status = ?, reviewed_by = ?, reviewed_at = NOW()'
-      updateValues = [status, adminId, donationId]
+      updateFields = 'status = ?, reviewed_at = NOW()'
+      updateValues = [status, donationId]
     } else {
+      // collected
       status = 'collected'
-      updateFields = 'status = ?, collected_at = NOW(), approval_photo = ?'
-      updateValues = [status, approvalPhoto || null, donationId]
+      if (approvalPhoto) {
+        updateFields = 'status = ?, collected_at = NOW(), approval_photo = ?'
+        updateValues = [status, approvalPhoto, donationId]
+      } else {
+        updateFields = 'status = ?, collected_at = NOW()'
+        updateValues = [status, donationId]
+      }
     }
 
     // Get donor and donation details for email
@@ -95,28 +101,45 @@ export async function PUT(
     const donation = donations[0]
 
     // Update item donation status and log action in transaction
-    await executeInTransaction(async (connection) => {
-      // Update donation status
-      await connection.execute(
-        `UPDATE item_donations 
-         SET ${updateFields}
-         WHERE id = ?`,
+    try {
+      await executeInTransaction(async (connection) => {
+        // Update donation status
+        logInfo(`Updating donation status to ${status}`, { donationId, updateFields, updateValues })
+        
+        await connection.execute(
+          `UPDATE item_donations 
+           SET ${updateFields}
+           WHERE id = ?`,
+          updateValues
+        )
+
+        // Log the action (without action_by since admin ID doesn't exist in users table)
+        await connection.execute(
+          `INSERT INTO donation_logs (donor_id, donation_type, donation_id, action) 
+           VALUES (?, 'item', ?, ?)`,
+          [donation.donor_id, donationId, action]
+        )
+      })
+      
+      logInfo(`Database update successful for ${action}`, { donationId })
+    } catch (dbError) {
+      logError('Database update failed', { 
+        error: dbError instanceof Error ? dbError.message : 'Unknown error',
+        donationId, 
+        action,
+        updateFields,
         updateValues
-      )
+      })
+      throw dbError
+    }
 
-      // Log the action
-      await connection.execute(
-        `INSERT INTO donation_logs (donor_id, donation_type, donation_id, action, action_by) 
-         VALUES (?, 'item', ?, ?, ?)`,
-        [donation.donor_id, donationId, action, adminId]
-      )
-    })
-
-    // Send email notifications
-    if (action === 'approve') {
-      // Email on approval - inform about collection schedule
-      const pickupDate = new Date(donation.pickup_datetime)
-      await sendEmail({
+    // Send email notifications (non-blocking - don't fail the request if email fails)
+    let emailSent = false
+    try {
+      if (action === 'approve') {
+        // Email on approval - inform about collection schedule
+        const pickupDate = new Date(donation.pickup_datetime)
+        await sendEmail({
         to: donation.email,
         subject: 'Item Donation Approved - Collection Scheduled',
         html: `
@@ -151,10 +174,10 @@ export async function PUT(
         <strong>Annadaan Team</strong><br>
         Republic Day 2026 Donation Drive</p>
         `
-      })
-    } else if (action === 'reject') {
-      // Email on rejection
-      await sendEmail({
+        })
+      } else if (action === 'reject') {
+        // Email on rejection
+        await sendEmail({
         to: donation.email,
         subject: 'Item Donation Status Update',
         html: `
@@ -179,11 +202,11 @@ export async function PUT(
         <p>Best regards,<br>
         <strong>Annadaan Team</strong></p>
         `
-      })
-    } else if (action === 'collected') {
-      // Generate PDF receipt
-      const receiptNumber = `RCP-ITM-${String(donation.id).padStart(6, '0')}`
-      const receiptData = {
+        })
+      } else if (action === 'collected') {
+        // Generate PDF receipt
+        const receiptNumber = `RCP-ITM-${String(donation.id).padStart(6, '0')}`
+        const receiptData = {
         receiptNumber,
         dateOfIssue: new Date().toLocaleDateString('en-IN', {
           year: 'numeric',
@@ -262,14 +285,25 @@ export async function PUT(
         Republic Day 2026 Donation Drive</p>
         `,
         attachments: emailAttachments
+        })
+      }
+      
+      emailSent = true
+      logInfo(`Email sent successfully for ${action} action`, { donationId, action })
+    } catch (emailError) {
+      logError('Failed to send email notification', { 
+        error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        donationId, 
+        action 
       })
+      // Don't fail the entire request if email fails
     }
 
     logInfo(`Item donation ${action}d successfully`, { donationId, action, adminId })
     
     return handleSuccess(
-      { emailSent: true },
-      `Item donation ${action}d successfully`
+      { emailSent },
+      `Item donation ${action}d successfully${!emailSent ? ' (email notification failed)' : ''}`
     )
 
   } catch (error) {

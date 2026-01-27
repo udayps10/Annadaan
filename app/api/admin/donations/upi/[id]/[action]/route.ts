@@ -79,16 +79,16 @@ export async function PUT(
       // Update donation status
       await connection.execute(
         `UPDATE upi_donations 
-         SET status = ?, reviewed_at = NOW(), reviewed_by = ?
+         SET status = ?, reviewed_at = NOW()
          WHERE id = ?`,
-        [status, adminId, donationId]
+        [status, donationId]
       )
 
-      // Log the action
+      // Log the action (without action_by since admin ID doesn't exist in users table)
       await connection.execute(
-        `INSERT INTO donation_logs (donor_id, donation_type, donation_id, action, action_by) 
-         VALUES (?, 'upi', ?, ?, ?)`,
-        [donorId, donationId, action, adminId]
+        `INSERT INTO donation_logs (donor_id, donation_type, donation_id, action) 
+         VALUES (?, 'upi', ?, ?)`,
+        [donorId, donationId, action]
       )
     })
 
