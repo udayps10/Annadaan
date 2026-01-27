@@ -33,7 +33,7 @@ const eventData = {
     ]
   },
   impact: {
-    totalFunds: 7147,
+    totalFunds: 7174,
     mealsDistributed: 150,
     volunteersEngaged: 5,
     familiesReached: 150
@@ -854,6 +854,331 @@ export default function RepublicDay2026() {
                     </div>
                   </motion.div>
                 ))}
+              </motion.div>
+            </motion.div>
+          </section>
+        </RevealSection>
+
+        {/* 6.5. OUR GENEROUS CONTRIBUTORS */}
+        <RevealSection>
+          <section className="max-w-6xl mx-auto px-4 py-24 md:py-32 bg-gradient-to-br from-orange-50 via-amber-50 to-orange-50">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={{
+                visible: {
+                  transition: {
+                    staggerChildren: 0.05
+                  }
+                }
+              }}
+            >
+              <motion.div 
+                className="text-center mb-16"
+                variants={fadeInUp}
+              >
+                <span className="text-5xl mb-4 block">🙏</span>
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  Our Generous Contributors
+                </h2>
+                <p className="text-gray-600 max-w-2xl mx-auto">
+                  Every contribution, big or small, made a real difference. We are deeply grateful to all our donors who made this event possible.
+                </p>
+              </motion.div>
+              
+              {/* UPI Donations */}
+              <motion.div className="mb-12" variants={fadeInUp}>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                  <span className="text-3xl">💰</span>
+                  <span>Monetary Contributions</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Rishit</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹560</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Uday</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹200</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Ashmit Singh</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹360</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Aaryan Ajay Yadav</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹11</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Krrishi Sisodiya</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹11</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Nis</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹15</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Vedant Mehta</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹11</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">NILESH HATE</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹1001</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Poonam Singh</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹1001</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Pravin Pereira</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹1000</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Prabhakar Singh</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹500</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Tanishka Desai</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹51</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Kenil</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹151</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Aryan Yadav</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹500</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Vasanthi m</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹20</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Aryan Singh</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹11</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Arpit Singh</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹360</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Raunak Singh</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹360</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Gayatri Magi</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹500</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Vikas Singh</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹501</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Anonymous</p>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">₹50</p>
+                    </div>
+                  </motion.div>
+                </div>
+
+                <motion.div 
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl p-6 mt-6 shadow-lg"
+                  variants={fadeInUp}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="text-xl font-semibold">Total Monetary Contributions</span>
+                    <span className="text-3xl font-bold">₹7,174</span>
+                  </div>
+                </motion.div>
+              </motion.div>
+
+              {/* Item Donations */}
+              <motion.div variants={fadeInUp}>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                  <span className="text-3xl">📦</span>
+                  <span>Item Contributions</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 mb-1">Sakshi Singh</p>
+                        <div className="bg-blue-50 rounded-lg p-3 mt-2">
+                          <p className="text-sm font-medium text-blue-900">500g Poha,500g Puffed Rice, 3kg Rice</p>
+                          <p className="text-xs text-blue-700 mt-1">Quantity: 3</p>
+                        </div>
+                      </div>
+                      <span className="text-2xl">✅</span>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 mb-1">Mahek singh</p>
+                        <div className="bg-blue-50 rounded-lg p-3 mt-2">
+                          <p className="text-sm font-medium text-blue-900">5kg rice</p>
+                          <p className="text-xs text-blue-700 mt-1">Quantity: 1</p>
+                        </div>
+                      </div>
+                      <span className="text-2xl">✅</span>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 mb-1">Poonam Singh</p>
+                        <div className="bg-blue-50 rounded-lg p-3 mt-2">
+                          <p className="text-sm font-medium text-blue-900">Used clothes, Rice - 2 kgs, Dal - 2 kgs</p>
+                          <p className="text-xs text-blue-700 mt-1">Quantity: 3</p>
+                        </div>
+                      </div>
+                      <span className="text-2xl">✅</span>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 mb-1">Loukik Salvi</p>
+                        <div className="bg-blue-50 rounded-lg p-3 mt-2">
+                          <p className="text-sm font-medium text-blue-900">Rice, Soya Bean</p>
+                          <p className="text-xs text-blue-700 mt-1">Quantity: 2</p>
+                        </div>
+                      </div>
+                      <span className="text-2xl">✅</span>
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp} className="bg-white rounded-lg p-5 border-2 border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 mb-1">Anonymous</p>
+                        <div className="bg-blue-50 rounded-lg p-3 mt-2">
+                          <p className="text-sm font-medium text-blue-900">1kg aata, packet of jaggery, packet of laddos</p>
+                          <p className="text-xs text-blue-700 mt-1">Quantity: 3</p>
+                        </div>
+                      </div>
+                      <span className="text-2xl">✅</span>
+                    </div>
+                  </motion.div>
+
+                  
+                </div>
+
+                <motion.div 
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl p-6 mt-6 shadow-lg"
+                  variants={fadeInUp}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="text-xl font-semibold">Total Item Donations</span>
+                    <span className="text-3xl font-bold">5 Contributors</span>
+                  </div>
+                </motion.div>
               </motion.div>
             </motion.div>
           </section>
