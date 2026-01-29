@@ -27,42 +27,54 @@ interface TeamMember {
 
 const teamMembers: TeamMember[] = [
   {
-    name: "Team Member 1",
-    role: "Operations & Coordination",
-    contribution: "Manages day-to-day operations and coordinates between food providers and NGOs to ensure seamless food rescue.",
-    imageUrl: "/team/member1.svg"
+    name: "Arpit Singh",
+    role: "CEO",
+    contribution: "Leads the strategic vision and operations, ensuring Annadaan's mission reaches communities effectively.",
+    imageUrl: "/images/team/ashmit.png"
   },
   {
-    name: "Team Member 2",
-    role: "Technology & Development",
-    contribution: "Builds and maintains the platform, ensuring reliability and implementing features that make food rescue efficient.",
-    imageUrl: "/team/member2.svg"
+    name: "Raunak Singh",
+    role: "CTO",
+    contribution: "Oversees technology infrastructure and innovation, building robust systems for seamless food rescue.",
+    imageUrl: "/images/team/raunak.png"
   },
   {
-    name: "Team Member 3",
-    role: "Community Outreach",
-    contribution: "Connects with restaurants, NGOs, and volunteers to grow the network and raise awareness about food waste.",
-    imageUrl: "/team/member3.svg"
+    name: "Rishit Singh",
+    role: "CFO",
+    contribution: "Manages financial planning and ensures sustainable growth while maximizing impact per rupee spent.",
+    imageUrl: "/images/team/ashmit.png"
   },
   {
-    name: "Team Member 4",
-    role: "Logistics & Planning",
-    contribution: "Organizes pickup schedules and routes, ensuring food reaches those in need quickly and efficiently.",
-    imageUrl: "/team/member4.svg"
+    name: "Udaypratap Singh",
+    role: "CMO",
+    contribution: "Drives marketing strategy and brand awareness to expand our network of partners and beneficiaries.",
+    imageUrl: "/images/team/uday.png"
   },
   {
-    name: "Team Member 5",
-    role: "Impact & Documentation",
-    contribution: "Tracks our impact, documents success stories, and manages communications with our community.",
-    imageUrl: "/team/member5.svg"
+    name: "Arpit Singh",
+    role: "Android Developer & Researcher",
+    contribution: "Develops mobile applications and conducts research to enhance platform capabilities and user experience.",
+    imageUrl: "/images/team/ashmit.png"
+  },
+  {
+    name: "Sakshi Singh",
+    role: "Creative & Social Media",
+    contribution: "Crafts compelling content and manages social media presence to engage and inspire our community.",
+    imageUrl: "/images/team/sakshi.png"
+  },
+  {
+    name: "Mahek Singh",
+    role: "Creative & Social Media",
+    contribution: "Creates visual content and manages online engagement to amplify our mission and impact stories.",
+    imageUrl: "/images/team/mahek.png"
   }
 ]
 
 const mentor: TeamMember = {
-  name: "Mentor Name",
+  name: "Loukik Salvi",
   role: "Mentor",
-  contribution: "Provides strategic guidance and mentorship, helping the team navigate challenges and scale impact.",
-  imageUrl: "/team/mentor.svg",
+  contribution: "Provides strategic guidance and mentorship, helping the team navigate challenges and scale impact effectively.",
+  imageUrl: "/images/team/loukik.png",
   isMentor: true
 }
 
@@ -141,13 +153,14 @@ export default function TeamSection() {
             </p>
           </div>
 
+          {/* First row with 4 members */}
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8"
             variants={staggerContainer}
             initial="initial"
             animate={inViewMembers ? "animate" : "initial"}
           >
-            {teamMembers.map((member, index) => (
+            {teamMembers.slice(0, 4).map((member, index) => (
               <motion.div
                 key={index}
                 variants={fadeInUp}
@@ -159,7 +172,44 @@ export default function TeamSection() {
                     src={member.imageUrl}
                     alt={member.name}
                     fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    className="object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {member.name}
+                  </h3>
+                  <div className="inline-block bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full mb-3">
+                    {member.role}
+                  </div>
+                  <p className="text-gray-600 leading-relaxed">
+                    {member.contribution}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Second row with 3 members - centered */}
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 max-w-5xl mx-auto"
+            variants={staggerContainer}
+            initial="initial"
+            animate={inViewMembers ? "animate" : "initial"}
+          >
+            {teamMembers.slice(4, 7).map((member, index) => (
+              <motion.div
+                key={index + 4}
+                variants={fadeInUp}
+                className="bg-white rounded-xl shadow-lg overflow-hidden group hover:shadow-2xl transition-all duration-300"
+                whileHover={{ y: -8 }}
+              >
+                <div className="relative w-full h-64 bg-gray-200 overflow-hidden">
+                  <Image
+                    src={member.imageUrl}
+                    alt={member.name}
+                    fill
+                    className="object-cover object-top group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
                 <div className="p-6">
@@ -187,12 +237,12 @@ export default function TeamSection() {
           >
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl shadow-xl overflow-hidden border-2 border-green-200">
               <div className="grid md:grid-cols-5 gap-0">
-                <div className="md:col-span-2 relative h-64 md:h-auto bg-gray-200">
+                <div className="md:col-span-2 relative h-80 md:h-auto bg-gray-200 overflow-hidden">
                   <Image
                     src={mentor.imageUrl}
                     alt={mentor.name}
                     fill
-                    className="object-cover"
+                    className="object-cover scale-105"
                   />
                 </div>
                 <div className="md:col-span-3 p-8 flex flex-col justify-center">

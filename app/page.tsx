@@ -91,7 +91,7 @@ export default function HomePage() {
             {/* Desktop menu */}
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                {['Features', 'How It Works', 'About'].map((item, index) => (
+                {['Features', 'How It Works'].map((item, index) => (
                   <motion.a
                     key={item}
                     href={`#${item.toLowerCase().replace(' ', '-')}`}
@@ -104,6 +104,17 @@ export default function HomePage() {
                     <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 group-hover:w-full transition-all duration-300"></span>
                   </motion.a>
                 ))}
+                
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Link href="/team" className="text-gray-700 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors relative group">
+                    Team
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 group-hover:w-full transition-all duration-300"></span>
+                  </Link>
+                </motion.div>
                 
                 {/* NEW: Donations Dropdown */}
                 <div 
@@ -206,7 +217,7 @@ export default function HomePage() {
               className="md:hidden border-t border-gray-200"
             >
               <div className="px-2 pt-2 pb-3 space-y-1">
-                {['Features', 'How It Works', 'About'].map((item) => (
+                {['Features', 'How It Works'].map((item) => (
                   <a
                     key={item}
                     href={`#${item.toLowerCase().replace(' ', '-')}`}
@@ -216,6 +227,12 @@ export default function HomePage() {
                     {item}
                   </a>
                 ))}
+                
+                <Link href="/team">
+                  <div className="text-gray-700 hover:text-green-600 hover:bg-gray-50 block px-3 py-2 rounded-md text-base font-medium" onClick={() => setMobileMenuOpen(false)}>
+                    Team
+                  </div>
+                </Link>
                 
                 {/* Donations submenu */}
                 <div className="space-y-1">
