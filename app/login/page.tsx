@@ -83,19 +83,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-primary-600 mb-2">🍽️ Annadaan</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-primary-600 mb-2">🍽️ Annadaan</h1>
           </Link>
-          <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-          <p className="mt-2 text-gray-600">Sign in to your account to continue</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Welcome back</h2>
+          <p className="mt-2 text-sm sm:text-base text-gray-600">Sign in to your account to continue</p>
         </div>
 
         {/* Form */}
-        <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-gray-100">
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
               {error}
@@ -162,7 +162,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm sm:text-base font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
             >
               {loading ? (
                 <div className="flex items-center">
@@ -182,12 +182,37 @@ export default function LoginPage() {
 
         {/* Sign up link */}
         <div className="text-center">
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Don't have an account?{' '}
             <Link href="/register" className="text-primary-600 hover:text-primary-500 font-medium">
               Sign up here
             </Link>
           </p>
+        </div>
+
+        {/* Donor login option */}
+        <div className="text-center">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-50 text-gray-500">Or</span>
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <Link 
+              href="/donation-drive/login"
+              className="inline-flex items-center justify-center w-full px-4 sm:px-6 py-3 border-2 border-green-500 text-green-600 rounded-lg text-sm sm:text-base font-semibold hover:bg-green-50 transition-all duration-200 transform hover:scale-105"
+            >
+              <span className="mr-2">🎁</span>
+              Login as Donor
+            </Link>
+            <p className="mt-2 text-xs text-gray-500">
+              For Republic Day campaign and food donations
+            </p>
+          </div>
         </div>
       </div>
     </div>

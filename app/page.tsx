@@ -314,7 +314,7 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               <motion.h1 
-                className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight"
+                className="text-3xl sm:text-4xl lg:text-6xl font-bold text-gray-900 leading-tight"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
@@ -336,7 +336,7 @@ export default function HomePage() {
               </motion.h1>
               
               <motion.p 
-                className="mt-6 text-xl text-gray-600 leading-relaxed"
+                className="mt-6 text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
@@ -352,7 +352,7 @@ export default function HomePage() {
                 transition={{ duration: 0.8, delay: 0.8 }}
               >
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link href="/register?type=vendor" className="group bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl text-center block relative overflow-hidden">
+                  <Link href="/register?type=vendor" className="group bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg text-base sm:text-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl text-center block relative overflow-hidden">
                     <span className="relative z-10">🏪 I'm a Food Provider</span>
                     <motion.div
                       className="absolute inset-0 bg-white opacity-20"
@@ -363,14 +363,14 @@ export default function HomePage() {
                   </Link>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link href="/register?type=ngo" className="group border-2 border-green-600 text-green-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-green-50 transition-all text-center block relative overflow-hidden">
+                  <Link href="/register?type=ngo" className="group border-2 border-green-600 text-green-600 px-6 sm:px-8 py-3 sm:py-4 rounded-lg text-base sm:text-lg font-semibold hover:bg-green-50 transition-all text-center block relative overflow-hidden">
                     <span className="relative z-10">🏠 I'm an NGO/Shelter</span>
                   </Link>
                 </motion.div>
               </motion.div>
               
               <motion.div 
-                className="mt-8 flex items-center space-x-8 text-sm text-gray-500"
+                className="mt-8 hidden sm:flex items-center space-x-4 lg:space-x-8 text-xs sm:text-sm text-gray-500"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1 }}
@@ -468,9 +468,9 @@ export default function HomePage() {
           >
             {[
               { number: "2026", label: "Founded", icon: "📅", color: "green" },
-{ number: "0", label: "Meals Rescued (Yet)", icon: "🍽️", color: "emerald" },
+{ number: "150+", label: "Meals Rescued", icon: "🍽️", color: "emerald" },
 { number: "12+", label: "Volunteers Onboarded", icon: "🤝", color: "blue" },
-{ number: "3", label: "Pilot Cities Planned", icon: "🏙️", color: "purple" }
+{ number: "3", label: "Pilot Suburbs Reached", icon: "🏙️", color: "purple" }
 
             ].map((stat, index) => (
               <motion.div 
@@ -489,14 +489,14 @@ export default function HomePage() {
                     <span className="text-2xl">{stat.icon}</span>
                   </motion.div>
                   <motion.div 
-                    className={`text-4xl font-bold text-${stat.color}-600 mb-2`}
+                    className={`text-3xl sm:text-4xl font-bold text-${stat.color}-600 mb-2`}
                     initial={{ scale: 0 }}
                     animate={inView1 ? { scale: 1 } : { scale: 0 }}
                     transition={{ delay: index * 0.2 + 0.5, type: "spring", stiffness: 100 }}
                   >
                     {stat.number}
                   </motion.div>
-                  <div className="text-gray-600 font-medium">{stat.label}</div>
+                  <div className="text-sm sm:text-base text-gray-600 font-medium">{stat.label}</div>
                 </div>
               </motion.div>
             ))}
@@ -504,119 +504,284 @@ export default function HomePage() {
         </div>
       </motion.section>
 
-      {/* How It Works Section with Enhanced Animations */}
-      <section id="how-it-works" className="py-20 bg-gradient-to-br from-gray-50 to-green-50 relative overflow-hidden">
-        <motion.div 
-          className="absolute top-20 right-10 w-32 h-32 bg-green-200 rounded-full blur-2xl opacity-40"
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.4, 0.6, 0.4]
-          }}
-          transition={{ 
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        
+      {/* Recent Event Showcase - Republic Day 2026 */}
+      <section className="py-20 bg-gray-50 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <span className="inline-block px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold mb-4">
+              🇮🇳 LATEST EVENT
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-gray-900 mb-4">
+              Republic Day 2026 Impact
+            </h2>
+            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+              On January 26, 2026, we mobilized communities across India to serve those in need.
+            </p>
+          </motion.div>
+
+          {/* Impact Stats Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12"
+          >
+            {[
+              { number: "₹7,174", label: "Total Funds Raised", icon: "💰" },
+              { number: "150+", label: "Meals Distributed", icon: "🍽️" },
+              { number: "5+", label: "Active Volunteers", icon: "🤝" },
+              { number: "150+", label: "Families Reached", icon: "❤️" }
+            ].map((stat, index) => (
+              <motion.div
+                key={index}
+                className="bg-white p-4 sm:p-6 rounded-xl shadow-md hover:shadow-lg transition-all text-center border border-gray-100"
+                whileHover={{ y: -5 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">{stat.icon}</div>
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">{stat.number}</div>
+                <div className="text-xs sm:text-sm text-gray-600">{stat.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+            {/* Fund Utilization */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="bg-white p-6 sm:p-8 rounded-xl shadow-md border border-gray-100"
+            >
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Fund Utilization Breakdown</h3>
+              <div className="space-y-4">
+                {[
+                  { category: "Food & Raw Materials", amount: "₹2,250", percentage: 31 },
+                  { category: "Logistics & Documentation", amount: "₹370", percentage: 5 },
+                  { category: "Packaging & Distribution", amount: "₹200", percentage: 3 },
+                  { category: "Digital Infrastructure", amount: "₹40", percentage: 1 }
+                ].map((item, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-700 font-medium">{item.category}</span>
+                      <span className="font-bold text-gray-900">{item.amount}</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2.5">
+                      <motion.div
+                        className="bg-orange-500 h-2.5 rounded-full"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${item.percentage}%` }}
+                        transition={{ duration: 1, delay: index * 0.1 }}
+                        viewport={{ once: true }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Event Image & Testimonial */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <div className="relative rounded-xl overflow-hidden shadow-md">
+                <Image
+                  src="/images/img-3.png"
+                  alt="Republic Day 2026 Meal Distribution"
+                  width={600}
+                  height={400}
+                  className="w-full h-[300px] object-cover"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                  <p className="text-white font-medium text-sm">Community meal distribution in Mumbai</p>
+                  <p className="text-white/80 text-xs">January 26, 2026</p>
+                </div>
+              </div>
+
+              <div className="bg-orange-50 border-l-4 border-orange-500 p-6 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">💬</div>
+                  <div>
+                    <p className="text-gray-700 italic mb-2">
+                      "Apsab log hamari madat kar rahe hai hamesha aise hi acha rakhega apko bhagwan aise hi karte raho"
+                    </p>
+                    <p className="text-gray-600 text-sm font-medium">— Community Member</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* CTA & Transparency */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="flex flex-col sm:flex-row gap-6 items-center justify-between bg-white p-6 rounded-xl shadow-md border border-gray-100"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">✅</span>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">100% Transparency</h3>
+                <p className="text-sm text-gray-600">Every rupee documented. Every receipt published.</p>
+              </div>
+            </div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link 
+                href="/events/republic-day-2026"
+                className="inline-block bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg"
+              >
+                View Full Impact Report →
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Why Annadaan Works - Trust Building Section */}
+      <section id="how-it-works" className="py-20 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <motion.div 
             ref={ref2}
             className="text-center mb-16"
-            initial={{ opacity: 0, y: 50 }}
-            animate={inView2 ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView2 ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-3xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-4">
-              How It Works
+            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-4">
+              Why Annadaan Works
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Simple, efficient, and impactful - transforming surplus food into hope
+              Built on compliance, transparency, and measurable impact
             </p>
           </motion.div>
           
+          {/* Four Trust Pillars */}
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-12"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16"
             variants={staggerContainer}
             initial="initial"
             animate={inView2 ? "animate" : "initial"}
           >
             {[
               {
-                icon: "📝",
-                title: "Share Available Food",
-                description: "Food providers easily list their surplus food with details about quantity, type, and pickup times through our intuitive platform.",
-                color: "blue",
-                step: "01"
+                icon: "✓",
+                title: "Verified Network",
+                description: "All NGOs are verified and registered before receiving food donations.",
+                color: "blue"
               },
               {
-                icon: "🔗",
-                title: "Smart Matching",
-                description: "Our AI-powered platform intelligently matches available food with nearby NGOs and shelters based on location, capacity, and dietary requirements.",
-                color: "green",
-                step: "02"
+                icon: "📜",
+                title: "80G Tax-Compliant Donations",
+                description: "Donations qualify under Section 80G. Proper receipts are generated for tax benefits.",
+                color: "green"
               },
               {
-                icon: "🚚",
-                title: "Seamless Pickup",
-                description: "Coordinated pickup by volunteers or NGO staff with real-time tracking and confirmation to ensure efficient food rescue operations.",
-                color: "purple",
-                step: "03"
+                icon: "📍",
+                title: "Real-Time Tracking",
+                description: "Pickup and delivery are tracked to ensure food reaches the right destination quickly.",
+                color: "orange"
+              },
+              {
+                icon: "📊",
+                title: "Full Transparency Dashboard",
+                description: "Donors can see impact metrics including meals served, food rescued, and funds utilized.",
+                color: "purple"
               }
-            ].map((step, index) => (
+            ].map((pillar, index) => (
               <motion.div 
                 key={index}
-                className="relative group"
+                className="bg-gray-50 p-4 sm:p-6 rounded-xl border-2 border-gray-200 hover:border-green-500 transition-all"
                 variants={fadeInUp}
+                whileHover={{ y: -5 }}
               >
-                <div className="text-center relative">
-                  {/* Step Number */}
-                  <motion.div 
-                    className="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold text-sm"
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={inView2 ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
-                    transition={{ delay: index * 0.2 + 0.5, type: "spring" }}
-                  >
-                    {step.step}
-                  </motion.div>
-                  
-                  {/* Icon Container */}
-                  <motion.div 
-                    className={`w-20 h-20 bg-gradient-to-r from-${step.color}-100 to-${step.color}-200 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:shadow-xl transition-all duration-300`}
-                    whileHover={{ 
-                      scale: 1.1,
-                      rotate: [0, -10, 10, 0],
-                      transition: { duration: 0.5 }
-                    }}
-                  >
-                    <span className="text-3xl">{step.icon}</span>
-                  </motion.div>
-                  
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4 group-hover:text-green-600 transition-colors">
-                    {step.title}
+                <div className="text-center">
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 bg-${pillar.color}-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4`}>
+                    <span className="text-xl sm:text-2xl font-bold text-gray-900">{pillar.icon}</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3">
+                    {pillar.title}
                   </h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    {step.description}
+                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                    {pillar.description}
                   </p>
                 </div>
-                
-                {/* Connection Line */}
-                {index < 2 && (
-                  <motion.div 
-                    className="hidden md:block absolute top-10 left-full w-12 h-0.5 bg-gradient-to-r from-green-300 to-emerald-300"
-                    initial={{ scaleX: 0 }}
-                    animate={inView2 ? { scaleX: 1 } : { scaleX: 0 }}
-                    transition={{ delay: index * 0.3 + 1 }}
-                  />
-                )}
               </motion.div>
             ))}
+          </motion.div>
+
+          {/* Impact Strip */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView2 ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 sm:p-8 mb-12"
+          >
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center text-white">
+              <div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">₹7,000+</div>
+                <div className="text-green-100 text-xs sm:text-sm">Raised</div>
+              </div>
+              <div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">150+</div>
+                <div className="text-green-100 text-xs sm:text-sm">Families Fed</div>
+              </div>
+              <div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">100%</div>
+                <div className="text-green-100 text-xs sm:text-sm">Verified Distribution</div>
+              </div>
+              <div>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">Real-Time</div>
+                <div className="text-green-100 text-xs sm:text-sm">Monitoring Enabled</div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView2 ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link 
+                href="/register" 
+                className="inline-block bg-gray-900 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg text-base sm:text-lg font-semibold hover:bg-gray-800 transition-all shadow-lg"
+              >
+                Partner With Annadaan
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link 
+                href="/events/republic-day-2026" 
+                className="inline-block border-2 border-gray-900 text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-lg text-base sm:text-lg font-semibold hover:bg-gray-900 hover:text-white transition-all"
+              >
+                See Impact Reports
+              </Link>
+            </motion.div>
           </motion.div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-gray-50">
+      {/* <section id="features" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">Platform Features</h2>
@@ -673,7 +838,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Gallery Showcase */}
       

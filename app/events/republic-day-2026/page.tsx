@@ -21,13 +21,13 @@ const eventData = {
     subtitle: 'Impact & Transparency Report',
     description: 'This page documents how your contributions were used.',
     date: 'January 26, 2026',
-    location: 'Multiple Cities Across India'
+    location: 'Multiple Suburbs Across India'
   },
   recap: {
     description: 'On January 26, 2026, Annadaan mobilized communities across India to celebrate Republic Day by serving those in need. Through collective effort and transparent operations, we transformed donations into dignified meals for families facing food insecurity. This report documents every step of that journey.',
     highlights: [
       { label: 'Event Date', value: 'January 26, 2026' },
-      { label: 'Duration', value: '24-hour drive' },
+      { label: 'Duration', value: '12-hour drive' },
       { label: 'Locations', value: 'Mumbai' },
       { label: 'Volunteers', value: '7 active participants' }
     ]
