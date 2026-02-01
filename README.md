@@ -643,6 +643,93 @@ if (!decoded || decoded.role !== 'vendor') {
 
 ## 6. User Workflows
 
+### System Flow Diagram
+
+```mermaid
+flowchart TD
+
+%% ========================
+%% VENDOR FLOW
+%% ========================
+
+subgraph Vendor_Flow
+    V1["Register as Vendor<br/>POST /api/auth/register<br/>role: vendor"]
+    V2["Status: Pending"]
+    V3["Upload Documents<br/>POST /api/verification/documents/upload"]
+    V4["Admin Reviews Vendor"]
+    V5{"Admin Decision"}
+    V6["Approve Vendor<br/>POST /api/admin/verification"]
+    V7["Status: Approved"]
+    V8["Create Food Listings"]
+    V9["Vendor Rejected"]
+end
+
+V1 --> V2 --> V3 --> V4 --> V5
+V5 -->|Approve| V6 --> V7 --> V8
+V5 -->|Reject| V9
+
+%% ========================
+%% NGO FLOW
+%% ========================
+
+subgraph NGO_Flow
+    N1["Browse Listings<br/>GET /api/listings"]
+    N2["Request Pickup<br/>POST /api/pickup-requests"]
+    N3["Vendor Reviews Request"]
+    N4{"Vendor Decision"}
+    N5["Approve Request<br/>PATCH /api/pickup-requests/:id"]
+    N6["NGO Picks Up Food"]
+    N7["Both Mark Completed"]
+    N8["Optional: Upload Photo Proof"]
+    N9["Pickup Rejected"]
+end
+
+V8 --> N1
+N1 --> N2 --> N3 --> N4
+N4 -->|Approve| N5 --> N6 --> N7 --> N8
+N4 -->|Reject| N9
+
+%% ========================
+%% DONOR FLOW
+%% ========================
+
+subgraph Donor_UPI_Flow
+    D1["Register as Donor<br/>POST /api/donation-drive/register"]
+    D2["Visit Event Page"]
+    D3["Click Donate UPI"]
+    D4["Generate QR<br/>POST /api/generate-upi-qr"]
+    D5["Pay via UPI App"]
+    D6["Upload Screenshot<br/>POST /api/donation-drive/upi"]
+    D7["Admin Reviews Donation"]
+    D8{"Admin Decision"}
+    D9["Approve Donation<br/>POST /api/admin/donations/upi/:id/approve"]
+    D10["Public Donation Display<br/>GET /api/public/approved-donations"]
+    D11["Donor Name Appears on Event Page"]
+    D12["Donation Rejected"]
+end
+
+D1 --> D2 --> D3 --> D4 --> D5 --> D6 --> D7 --> D8
+D8 -->|Approve| D9 --> D10 --> D11
+D8 -->|Reject| D12
+
+%% ========================
+%% ADMIN FLOW
+%% ========================
+
+subgraph Admin_Daily_Workflow
+    A1["Admin Login<br/>POST /api/auth/login"]
+    A2["Review Pending Vendors<br/>GET /api/admin/verification"]
+    A3["Review Donations<br/>GET /api/admin/donations"]
+    A4["Monitor System Health<br/>GET /api/health"]
+end
+
+A1 --> A2 --> V4
+A1 --> A3 --> D7
+A1 --> A4
+```
+
+---
+
 ### A. Vendor Registration & Verification
 
 1. **Register**: POST `/api/auth/register` with `role: 'vendor'`
