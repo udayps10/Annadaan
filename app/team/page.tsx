@@ -169,7 +169,7 @@ export default function TeamPage() {
               />
             </div>
             <p className="text-center text-gray-600 mt-4 text-lg">
-              The founding team — January 2026
+              The founding team of Annadaan, united by a passion to end food waste and hunger.
             </p>
           </motion.div>
         </div>
