@@ -16,11 +16,14 @@ export default function DonorRegistrationPage() {
     fullName: '',
     phone: '',
     email: '',
-    aadhaarNumber: ''
+    password: '',
+    confirmPassword: ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -48,11 +51,20 @@ export default function DonorRegistrationPage() {
       newErrors.email = 'Please enter a valid email address'
     }
 
-    // Aadhaar validation
-    if (!formData.aadhaarNumber.trim()) {
-      newErrors.aadhaarNumber = 'Aadhaar number is required'
-    } else if (!/^\d{12}$/.test(formData.aadhaarNumber)) {
-      newErrors.aadhaarNumber = 'Aadhaar number must be exactly 12 digits'
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required'
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters long'
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      newErrors.password = 'Password must contain uppercase, lowercase, and number'
+    }
+
+    // Confirm Password validation
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password'
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match'
     }
 
     setErrors(newErrors)
@@ -289,36 +301,81 @@ export default function DonorRegistrationPage() {
                 </p>
               </div>
 
-              {/* Aadhaar Number */}
+              {/* Password */}
               <div>
-                <label htmlFor="aadhaarNumber" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Aadhaar Number <span className="text-red-500">*</span>
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Password <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  id="aadhaarNumber"
-                  name="aadhaarNumber"
-                  value={formData.aadhaarNumber}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${
-                    errors.aadhaarNumber ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50'
-                  } focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none`}
-                  placeholder="12-digit Aadhaar number"
-                  maxLength={12}
-                  disabled={isSubmitting}
-                />
-                {errors.aadhaarNumber && (
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border ${
+                      errors.password ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50'
+                    } focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none pr-12`}
+                    placeholder="Create a strong password"
+                    disabled={isSubmitting}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
+                {errors.password && (
                   <motion.p 
                     className="mt-2 text-sm text-red-600 flex items-center"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    <span className="mr-1">⚠️</span> {errors.aadhaarNumber}
+                    <span className="mr-1">⚠️</span> {errors.password}
                   </motion.p>
                 )}
                 <p className="mt-2 text-sm text-gray-500">
-                  🔒 Your Aadhaar information is kept confidential and secure
+                  🔒 Must be at least 8 characters with uppercase, lowercase, and number
                 </p>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Confirm Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border ${
+                      errors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50'
+                    } focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none pr-12`}
+                    placeholder="Re-enter your password"
+                    disabled={isSubmitting}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showConfirmPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <motion.p 
+                    className="mt-2 text-sm text-red-600 flex items-center"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <span className="mr-1">⚠️</span> {errors.confirmPassword}
+                  </motion.p>
+                )}
               </div>
 
               {/* Submit Error */}

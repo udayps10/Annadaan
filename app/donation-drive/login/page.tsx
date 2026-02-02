@@ -12,13 +12,16 @@ const fadeInUp = {
 
 export default function DonorLoginPage() {
   const router = useRouter()
+  const [authMethod, setAuthMethod] = useState<'password' | 'aadhaar'>('password')
   const [formData, setFormData] = useState({
     phone: '',
+    password: '',
     aadhaarLast4: ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -30,11 +33,19 @@ export default function DonorLoginPage() {
       newErrors.phone = 'Please enter a valid 10-digit Indian mobile number'
     }
 
-    // Aadhaar last 4 digits validation
-    if (!formData.aadhaarLast4.trim()) {
-      newErrors.aadhaarLast4 = 'Last 4 digits of Aadhaar are required'
-    } else if (!/^\d{4}$/.test(formData.aadhaarLast4)) {
-      newErrors.aadhaarLast4 = 'Please enter exactly 4 digits'
+    // Validate based on auth method
+    if (authMethod === 'password') {
+      // Password validation
+      if (!formData.password) {
+        newErrors.password = 'Password is required'
+      }
+    } else {
+      // Aadhaar last 4 digits validation
+      if (!formData.aadhaarLast4.trim()) {
+        newErrors.aadhaarLast4 = 'Last 4 digits of Aadhaar are required'
+      } else if (!/^\d{4}$/.test(formData.aadhaarLast4)) {
+        newErrors.aadhaarLast4 = 'Please enter exactly 4 digits'
+      }
     }
 
     setErrors(newErrors)
@@ -61,12 +72,16 @@ export default function DonorLoginPage() {
     setSubmitError('')
 
     try {
+      const requestBody = authMethod === 'password' 
+        ? { phone: formData.phone, password: formData.password }
+        : { phone: formData.phone, aadhaarLast4: formData.aadhaarLast4 }
+
       const response = await fetch('/api/donation-drive/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestBody),
       })
 
       const data = await response.json()
@@ -78,10 +93,17 @@ export default function DonorLoginPage() {
       }
 
       // Store donor ID in sessionStorage
-      // API returns: { success: true, data: { donorId, fullName, ... }, message: '...' }
+      // API returns: { success: true, data: { donorId, fullName, requiresPasswordUpdate, ... }, message: '...' }
       if (data.success && data.data?.donorId) {
         sessionStorage.setItem('donorId', data.data.donorId.toString())
         sessionStorage.setItem('donorName', data.data.fullName)
+        
+        // Check if user needs to set up password (for Aadhaar login)
+        if (data.data.requiresPasswordUpdate) {
+          // Redirect to password setup page
+          router.push('/donation-drive/setup-password')
+          return
+        }
       }
 
       // Redirect to donation options
@@ -167,6 +189,51 @@ export default function DonorLoginPage() {
             className="bg-white rounded-2xl shadow-xl p-8"
             variants={fadeInUp}
           >
+            {/* Authentication Method Toggle */}
+            <div className="mb-6">
+              <div className="flex rounded-lg bg-gray-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMethod('password')
+                    setErrors({})
+                    setSubmitError('')
+                  }}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-all ${
+                    authMethod === 'password'
+                      ? 'bg-white text-green-700 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  🔐 Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMethod('aadhaar')
+                    setErrors({})
+                    setSubmitError('')
+                  }}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-all ${
+                    authMethod === 'aadhaar'
+                      ? 'bg-white text-orange-700 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  🆔 Aadhaar (Legacy)
+                </button>
+              </div>
+              {authMethod === 'aadhaar' && (
+                <motion.p 
+                  className="mt-3 text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-3"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  ⚠️ <strong>Existing users only:</strong> After login, you'll be prompted to set a password for future logins.
+                </motion.p>
+              )}
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Phone Number */}
               <div>
@@ -195,35 +262,71 @@ export default function DonorLoginPage() {
                 )}
               </div>
 
-              {/* Aadhaar Last 4 Digits */}
-              <div>
-                <label htmlFor="aadhaarLast4" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Last 4 Digits of Aadhaar <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="aadhaarLast4"
-                  name="aadhaarLast4"
-                  value={formData.aadhaarLast4}
-                  onChange={handleInputChange}
-                  maxLength={4}
-                  placeholder="XXXX"
-                  className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-offset-2 outline-none transition-all ${
-                    errors.aadhaarLast4
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                      : 'border-gray-300 focus:border-green-500 focus:ring-green-200'
-                  }`}
-                />
-                {errors.aadhaarLast4 && (
-                  <p className="mt-2 text-sm text-red-600 flex items-start">
-                    <span className="mr-1">⚠️</span>
-                    {errors.aadhaarLast4}
+              {/* Conditional Fields Based on Auth Method */}
+              {authMethod === 'password' ? (
+                <div>
+                  <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                    Password <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      id="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="Enter your password"
+                      className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-offset-2 outline-none transition-all pr-12 ${
+                        errors.password
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-300 focus:border-green-500 focus:ring-green-200'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? '🙈' : '👁️'}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="mt-2 text-sm text-red-600 flex items-start">
+                      <span className="mr-1">⚠️</span>
+                      {errors.password}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label htmlFor="aadhaarLast4" className="block text-sm font-semibold text-gray-700 mb-2">
+                    Last 4 Digits of Aadhaar <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="aadhaarLast4"
+                    name="aadhaarLast4"
+                    value={formData.aadhaarLast4}
+                    onChange={handleInputChange}
+                    maxLength={4}
+                    placeholder="XXXX"
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-offset-2 outline-none transition-all ${
+                      errors.aadhaarLast4
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                        : 'border-gray-300 focus:border-orange-500 focus:ring-orange-200'
+                    }`}
+                  />
+                  {errors.aadhaarLast4 && (
+                    <p className="mt-2 text-sm text-red-600 flex items-start">
+                      <span className="mr-1">⚠️</span>
+                      {errors.aadhaarLast4}
+                    </p>
+                  )}
+                  <p className="mt-2 text-xs text-gray-500">
+                    For security, enter only the last 4 digits of your Aadhaar number
                   </p>
-                )}
-                <p className="mt-2 text-xs text-gray-500">
-                  For security, enter only the last 4 digits of your Aadhaar number
-                </p>
-              </div>
+                </div>
+              )}
 
               {/* Error Display */}
               {submitError && (

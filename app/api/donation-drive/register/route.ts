@@ -1,6 +1,7 @@
 /**
  * Donor Registration Endpoint
  * Handles individual donor registration for donation drive
+ * Supports password-based authentication (new) with optional Aadhaar (legacy)
  */
 
 import { NextRequest } from 'next/server'
@@ -22,13 +23,15 @@ import {
   sanitizePhone,
   sanitizeString 
 } from '@/lib/validation'
+import { hashPassword } from '@/lib/auth'
 import { HTTP_STATUS } from '@/lib/config'
 
 interface DonorRegistration {
   fullName: string
   phone: string
   email: string
-  aadhaarNumber: string
+  password: string
+  aadhaarNumber?: string // Now optional for new registrations
 }
 
 interface ExistingDonor {
@@ -40,18 +43,37 @@ export async function POST(request: NextRequest) {
     const body: DonorRegistration = await request.json()
 
     // Validate all required fields
-    validateFields([
+    const validations = [
       { result: validateRequired(body.fullName, 'Full name'), field: 'fullName' },
       { result: validateRequired(body.phone, 'Phone'), field: 'phone' },
       { result: validateRequired(body.email, 'Email'), field: 'email' },
-      { result: validateRequired(body.aadhaarNumber, 'Aadhaar number'), field: 'aadhaarNumber' },
+      { result: validateRequired(body.password, 'Password'), field: 'password' },
       { result: validateName(body.fullName, 'Full name'), field: 'fullName' },
       { result: validatePhone(body.phone), field: 'phone' },
       { result: validateEmail(body.email), field: 'email' },
-    ])
+    ]
 
-    // Validate Aadhaar format (12 digits)
-    if (!/^\d{12}$/.test(body.aadhaarNumber)) {
+    // Validate password strength
+    if (body.password) {
+      if (body.password.length < 8) {
+        validations.push({
+          result: { isValid: false, errors: ['Password must be at least 8 characters long'] },
+          field: 'password'
+        })
+      }
+      // Optional: Add more password strength requirements
+      if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(body.password)) {
+        validations.push({
+          result: { isValid: false, errors: ['Password must contain at least one uppercase letter, one lowercase letter, and one number'] },
+          field: 'password'
+        })
+      }
+    }
+
+    validateFields(validations)
+
+    // Validate Aadhaar format if provided (optional for new users, for backward compatibility)
+    if (body.aadhaarNumber && !/^\d{12}$/.test(body.aadhaarNumber)) {
       throw new ValidationError('Aadhaar number must be exactly 12 digits')
     }
 
@@ -59,7 +81,7 @@ export async function POST(request: NextRequest) {
     const fullName = sanitizeString(body.fullName)
     const phone = sanitizePhone(body.phone)
     const email = sanitizeEmail(body.email)
-    const aadhaarNumber = body.aadhaarNumber.trim()
+    const aadhaarNumber = body.aadhaarNumber ? body.aadhaarNumber.trim() : null
 
     // Check if email already exists
     const existingEmail = await executeQuery<ExistingDonor[]>(
@@ -73,28 +95,46 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Check if Aadhaar already exists
-    const existingAadhaar = await executeQuery<ExistingDonor[]>(
-      'SELECT id FROM individual_donors WHERE aadhaar_number = ?',
-      [aadhaarNumber]
+    // Check if phone already exists
+    const existingPhone = await executeQuery<ExistingDonor[]>(
+      'SELECT id FROM individual_donors WHERE phone = ?',
+      [phone]
     )
 
-    if (existingAadhaar.length > 0) {
-      throw new ConflictError('This Aadhaar number is already registered', {
-        donorId: existingAadhaar[0].id
+    if (existingPhone.length > 0) {
+      throw new ConflictError('This phone number is already registered', {
+        donorId: existingPhone[0].id
       })
     }
 
-    // Insert new donor
+    // Check if Aadhaar already exists (if provided)
+    if (aadhaarNumber) {
+      const existingAadhaar = await executeQuery<ExistingDonor[]>(
+        'SELECT id FROM individual_donors WHERE aadhaar_number = ?',
+        [aadhaarNumber]
+      )
+
+      if (existingAadhaar.length > 0) {
+        throw new ConflictError('This Aadhaar number is already registered', {
+          donorId: existingAadhaar[0].id
+        })
+      }
+    }
+
+    // Hash the password
+    const passwordHash = await hashPassword(body.password)
+
+    // Insert new donor with password
     const result = await executeQuery<any>(
-      `INSERT INTO individual_donors (full_name, phone, email, aadhaar_number, registration_date) 
-       VALUES (?, ?, ?, ?, NOW())`,
-      [fullName, phone, email, aadhaarNumber]
+      `INSERT INTO individual_donors 
+       (full_name, phone, email, aadhaar_number, password_hash, requires_password_update, registration_date) 
+       VALUES (?, ?, ?, ?, ?, 0, NOW())`,
+      [fullName, phone, email, aadhaarNumber, passwordHash]
     )
 
     const donorId = result.insertId
 
-    logInfo('New donor registered', { donorId, email })
+    logInfo('New donor registered with password', { donorId, email })
 
     return handleSuccess({
       donorId,
